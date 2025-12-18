@@ -1,13 +1,29 @@
+import React from "react"
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { ThemeProvider } from "./context/ThemeContext"
+import Home from "./page/Home";
+import { HomeContext } from "./context/HomeContext";
+
 
 function App() {
+  const siteval={
+      web_name:"prediction web",
+      web_logo:"",
+  }
   
 
   return (
-    <>
-     <h1 class="text-3xl font-bold underline text-red-500">
-         Hello world!
-      </h1>
-    </>
+     <HomeContext.Provider value={{siteval}}>
+        <ThemeProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Home/>} />
+          </Routes>
+        
+        </BrowserRouter>
+      </ThemeProvider>
+     </HomeContext.Provider>
+    
   )
 }
 

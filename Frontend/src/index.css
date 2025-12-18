@@ -1,1 +1,31 @@
 @import "tailwindcss";
+@plugin "daisyui" {
+  themes: all;
+}
+@custom-variant dark (&:where(.dark, .dark *));
+*{
+  font-family: 'Prompt',sans-serif;
+}
+
+/* @plugin "daisyui";
+@theme{
+  --primary: #0f172a;
+  --primary-content: #ffffff;
+  --secondary: #1e293b;
+  --secondary-content: #ffffff;
+  --accent: #3b82f6;
+  --accent-content: #ffffff;
+}
+@custom-variant dark (&:where(.dark, .dark *));
+
+*{
+  font-family: 'Prompt',sans-serif;
+}
+
+.shadow-right {
+  box-shadow: 4px 0 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.shadow-left {
+  box-shadow: -4px 0 6px -1px rgba(0, 0, 0, 0.1);
+} */
