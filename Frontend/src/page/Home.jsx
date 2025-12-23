@@ -1,13 +1,21 @@
-import React from 'react';
+import React, { useContext, useEffect } from 'react';
 import Darkmodebutton from '../component/DarkmodeButton';
 import { useDarkMode } from '../context/ThemeContext';
+import { useNavigate } from 'react-router-dom';
+import { AuthContext } from '../utilities/AuthProvider';
 
 
 
 
 const Home = () => {
-
+    const navigate = useNavigate()
+    const { isLoggedIN } = useContext(AuthContext)
     const { darkmode } = useDarkMode();
+    useEffect(() => {
+        if (isLoggedIN) {
+            navigate("/dashboard")
+        }
+    }, [isLoggedIN])
 
 
     return (

@@ -7,6 +7,10 @@ import Registration from "./page/UserAuth/Registration";
 import Login from "./page/UserAuth/Login";
 import Header from "./component/Header";
 import Footer from "./component/Footer";
+import AuthProvider from "./utilities/AuthProvider";
+import ProtectClient from "./utilities/ProtectClient";
+import Dashboard from "./page/Dashboard";
+import IndexPage from "./component/DashboardClient/IndexPage";
 
 
 function App() {
@@ -17,20 +21,30 @@ function App() {
 
 
   return (
-    <HomeContext.Provider value={{ siteval }}>
-      <ThemeProvider>
-        <BrowserRouter>
-          <Header />
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/registration" element={<Registration />} />
-            <Route path="/login" element={<Login />} />
-          </Routes>
-          <Footer />
+    <AuthProvider>
+      <HomeContext.Provider value={{ siteval }}>
+        <ThemeProvider>
+          <BrowserRouter>
+            <Header />
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/registration" element={<Registration />} />
+              <Route path="/login" element={<Login />} />
 
-        </BrowserRouter>
-      </ThemeProvider>
-    </HomeContext.Provider>
+              <Route path={`/dashboard`} element={<ProtectClient />}>
+                <Route element={<Dashboard />}>
+                  <Route index element={<IndexPage />} />
+
+                </Route>
+              </Route>
+
+            </Routes>
+            <Footer />
+
+          </BrowserRouter>
+        </ThemeProvider>
+      </HomeContext.Provider>
+    </AuthProvider>
 
   )
 }

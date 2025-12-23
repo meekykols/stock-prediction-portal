@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { Mail, User, Lock, Eye, EyeOff, CheckCircle } from 'lucide-react';
 import { useDarkMode } from '../../context/ThemeContext';
-import { Link } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../../../API/API';
 import { Oval } from 'react-loader-spinner'
 
 const Registration = () => {
+    const navigate = useNavigate()
     const { darkmode } = useDarkMode();
     const [formData, setFormData] = useState({
         username: '',
@@ -83,6 +84,7 @@ const Registration = () => {
                     confirmPassword: ''
                 })
                 toast.success("registration successful")
+                navigate("/login")
 
             } catch (error) {
 
@@ -244,7 +246,7 @@ const Registration = () => {
 
                                 {/* Submit Button */}
                                 <div className="form-control mt-6">
-                                    {loading ? <button onClick={handleSubmit} className="btn btn-primary w-full text-white">
+                                    {loading ? <button className="btn btn-primary w-full text-white">
                                         <Oval
                                             visible={true}
                                             height="30"

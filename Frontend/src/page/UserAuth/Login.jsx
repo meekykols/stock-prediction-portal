@@ -1,13 +1,18 @@
-import React, { useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { User, Lock, Eye, EyeOff, LogIn, AlertCircle } from 'lucide-react';
-import { useHome } from '../../context/HomeContext';
 import { useDarkMode } from '../../context/ThemeContext';
 import Header from '../../component/Header';
 import Footer from '../../component/Footer';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import api from '../../../API/API';
+import toast from 'react-hot-toast';
+import { Oval } from 'react-loader-spinner';
+import { AuthContext } from '../../utilities/AuthProvider';
 
 const Login = () => {
-
+    const navigate = useNavigate()
+    const { isLoggedIN, setIsLoggedIn } = useContext(AuthContext)
+    const [loading, setLoading] = useState(false);
     const { darkmode } = useDarkMode();
     const [formData, setFormData] = useState({
         username: '',
@@ -17,6 +22,11 @@ const Login = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [errors, setErrors] = useState({});
     const [rememberMe, setRememberMe] = useState(false);
+    useEffect(() => {
+        if (isLoggedIN) {
+            navigate("/dashboard")
+        }
+    }, [isLoggedIN])
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -41,19 +51,41 @@ const Login = () => {
             newErrors.username = 'Username is required';
         }
 
+
         if (!formData.password) {
-            newErrors.password = 'Password is required';
+            newErrors.detail = 'Password is required';
         }
 
         return newErrors;
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = async (e) => {
+        e.preventDefault();
         const newErrors = validateForm();
+        setLoading(true)
 
         if (Object.keys(newErrors).length === 0) {
-            console.log('Login data:', { ...formData, rememberMe });
-            alert('Login successful! Check console for data.');
+            //console.log('Form submitted:', formData);
+            try {
+                const response = await api.post(`/token/`, formData)
+
+                setFormData({
+                    username: '',
+                    password: '',
+                })
+                toast.success("login successful")
+                localStorage.setItem("accessToken", response.data.access)
+                localStorage.setItem("refreshToken", response.data.refresh)
+                setIsLoggedIn(true)
+                navigate("/dashboard")
+            } catch (error) {
+
+                toast.error(error.response.data.detail)
+                setErrors(error.response.data.detail)
+                //console.log(error.response.data.detail)
+            } finally {
+                setLoading(false)
+            }
         } else {
             setErrors(newErrors);
         }
@@ -178,13 +210,25 @@ const Login = () => {
 
                                 {/* Login Button */}
                                 <div className="form-control mt-6">
-                                    <button
-                                        onClick={handleSubmit}
-                                        className="btn btn-primary w-full h-12 text-base text-white shadow-lg hover:shadow-xl transition-all duration-300"
-                                    >
-                                        <LogIn className="w-5 h-5 mr-2" />
-                                        Sign In
-                                    </button>
+                                    {
+                                        loading ? <button disabled={loading ? false : true}
+                                            className={`btn btn-primary w-full h-12 text-base text-white shadow-lg hover:shadow-xl transition-all duration-300 ${loading ? 'bg-gray-400' : ''}`}
+                                        >
+                                            <Oval
+                                                visible={true}
+                                                height="30"
+                                                width="50"
+                                                color="white"
+                                            />
+                                        </button> : <button
+                                            onClick={handleSubmit}
+                                            className="btn btn-primary w-full h-12 text-base text-white shadow-lg hover:shadow-xl transition-all duration-300"
+                                        >
+                                            <LogIn className="w-5 h-5 mr-2" />
+                                            Sign In
+                                        </button>
+                                    }
+
                                 </div>
                             </div>
 

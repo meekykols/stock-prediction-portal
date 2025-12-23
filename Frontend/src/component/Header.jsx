@@ -1,16 +1,26 @@
-import React from 'react';
+import React, { useContext, useEffect } from 'react';
 import Darkmodebutton from './DarkmodeButton';
 import { IoCloseSharp } from "react-icons/io5";
 import { GiHamburgerMenu } from "react-icons/gi";
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useHome } from '../context/HomeContext';
 import { useDarkMode } from '../context/ThemeContext';
+import { AuthContext } from '../utilities/AuthProvider';
+import { User } from 'lucide-react';
 
 
 const Header = () => {
   //const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const navigate = useNavigate()
   const { darkmode } = useDarkMode();
   const { siteval } = useHome();
+  const { isLoggedIN, setIsLoggedIn } = useContext(AuthContext)
+
+  useEffect(() => {
+    if (isLoggedIN) {
+      navigate("/")
+    }
+  }, [isLoggedIN])
 
   return (
     <>
@@ -32,14 +42,29 @@ const Header = () => {
             <Darkmodebutton />
 
             {/* Auth Buttons */}
-            <div className="hidden sm:flex gap-2">
-              <Link to="/login" className="btn btn-sm btn-outline btn-primary">
-                Sign in
-              </Link>
-              <Link to="/registration" className="btn btn-sm btn-primary">
-                Sign out
-              </Link>
-            </div>
+
+            {
+              isLoggedIN ? <div className="hidden sm:flex gap-2">
+                <Link to="/dashboard" className="btn btn-sm btn-outline btn-primary">
+                  <User />
+                </Link>
+                <button onClick={() => {
+                  localStorage.removeItem("accessToken")
+                  localStorage.removeItem("refreshToken")
+                  setIsLoggedIn(false)
+                }} className="btn btn-sm btn-primary">
+                  Logout
+                </button>
+              </div> : <div className="hidden sm:flex gap-2">
+                <Link to="/login" className="btn btn-sm btn-outline btn-primary">
+                  Sign in
+                </Link>
+                <Link to="/registration" className="btn btn-sm btn-primary">
+                  Sign out
+                </Link>
+              </div>
+            }
+
 
             {/* Mobile Menu */}
             <div className="dropdown dropdown-end sm:hidden">
