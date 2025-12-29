@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
 import { Home, User, DollarSign, HelpCircle, BarChart2, CreditCard, ChevronLeft, ChevronRight, LogOut } from 'lucide-react';
 import { useDarkMode } from '../context/ThemeContext';
+import { AuthContext } from '../utilities/AuthProvider';
 
 export default function Dashboard() {
     const [isShowed, setIsShowed] = useState(true);
     const { darkmode } = useDarkMode();
+    const { setIsLoggedIn } = useContext(AuthContext)
 
     return (
         <div data-theme={darkmode ? "dracula" : "cupcake"} className="flex h-screen ">
@@ -51,8 +53,8 @@ export default function Dashboard() {
                             <SidebarItem
                                 onClick={() => setIsShowed(false)}
                                 icon={<BarChart2 className="w-5 h-5" />}
-                                label="Status"
-                                to="/dashboard/status"
+                                label="Prediction"
+                                to="/dashboard/prediction"
                             />
                         </div>
                     </div>
@@ -68,14 +70,14 @@ export default function Dashboard() {
                             <SidebarItem
                                 onClick={() => setIsShowed(false)}
                                 icon={<DollarSign className="w-5 h-5" />}
-                                label="Buy Token"
-                                to="/dashboard/buy-token"
+                                label="football prediction"
+                                to="/dashboard/"
                             />
                             <SidebarItem
                                 onClick={() => setIsShowed(false)}
                                 icon={<CreditCard className="w-5 h-5" />}
-                                label="My Tokens"
-                                to="/dashboard/my-token"
+                                label="forex prediction"
+                                to="/dashboard/"
                             />
                         </div>
                     </div>
@@ -94,8 +96,8 @@ export default function Dashboard() {
                                     console.log('triggered much from how to by');
                                 }}
                                 icon={<HelpCircle className="w-5 h-5" />}
-                                label="How to Buy"
-                                to="/dashboard/how-to-buy"
+                                label="FAQ"
+                                to="/dashboard/"
                             />
                         </div>
                     </div>
@@ -103,12 +105,14 @@ export default function Dashboard() {
                     {/* LOGOUT Section */}
                     <div
                         onClick={() => {
-                            console.log('logout clicked');
+                            localStorage.removeItem("accessToken")
+                            localStorage.removeItem("refreshToken")
+                            setIsLoggedIn(false)
                         }}
                         className="mt-auto pt-6 border-t border-slate-800"
                     >
                         <div className="px-3 mb-2">
-                            <span className="text-xs font-semibold  uppercase tracking-wider">
+                            <span className="text-xs font-semibold  uppercase tracking-wider" >
                                 Logout
                             </span>
                         </div>
@@ -142,7 +146,7 @@ export default function Dashboard() {
                     <Outlet context={{}} />
                 </div>
             </div>
-        </div>
+        </div >
     );
 }
 

@@ -11,6 +11,9 @@ import AuthProvider from "./utilities/AuthProvider";
 import ProtectClient from "./utilities/ProtectClient";
 import Dashboard from "./page/Dashboard";
 import IndexPage from "./component/DashboardClient/IndexPage";
+import PredictionPage from "./component/DashboardClient/PredictionPage";
+import { UserInfoProvider } from "./context/UserContext";
+import UserProfile from "./component/DashboardClient/UserProfile";
 
 
 function App() {
@@ -23,26 +26,31 @@ function App() {
   return (
     <AuthProvider>
       <HomeContext.Provider value={{ siteval }}>
-        <ThemeProvider>
-          <BrowserRouter>
-            <Header />
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/registration" element={<Registration />} />
-              <Route path="/login" element={<Login />} />
+        <UserInfoProvider>
+          <ThemeProvider>
+            <BrowserRouter>
+              <Header />
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/registration" element={<Registration />} />
+                <Route path="/login" element={<Login />} />
 
-              <Route path={`/dashboard`} element={<ProtectClient />}>
-                <Route element={<Dashboard />}>
-                  <Route index element={<IndexPage />} />
+                <Route path={`/dashboard`} element={<ProtectClient />}>
+                  <Route element={<Dashboard />}>
+                    <Route index element={<IndexPage />} />
+                    <Route path="prediction" element={<PredictionPage />} />
+                    <Route path="profile" element={<UserProfile />} />
 
+
+                  </Route>
                 </Route>
-              </Route>
 
-            </Routes>
-            <Footer />
+              </Routes>
+              <Footer />
 
-          </BrowserRouter>
-        </ThemeProvider>
+            </BrowserRouter>
+          </ThemeProvider>
+        </UserInfoProvider>
       </HomeContext.Provider>
     </AuthProvider>
 

@@ -9,16 +9,21 @@ from rest_framework.response import Response
 
 # Create your views here.
 class RegisterView(generics.CreateAPIView):
-    print("i got to this endpoint")
+   
     queryset=User.objects.all()
     serializer_class=UserSerializers
     permission_classes = [AllowAny]
 
 class ProtectedView(APIView):
     permission_classes=[IsAuthenticated]
-
+   
     def get(self, request):
         response = {
-            "status":"request was permitted"
+            "status":"request was permitted",
+            "Userinfo":{
+                "id": request.user.id,
+                "username": request.user.username,
+                "email": request.user.email,
+            }
         }
         return Response(response)

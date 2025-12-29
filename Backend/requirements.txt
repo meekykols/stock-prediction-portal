@@ -3,3 +3,10 @@ djangorestframework
 django-filter
 markdown
 python-decouple
+keras
+scikit-learn
+yfinance
+pandas
+numpy
+matplotlib
+tensorflow
