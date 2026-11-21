@@ -1,0 +1,46 @@
+{
+  "nav": {
+    "home": "Home",
+    "pricing": "Pricing",
+    "about": "About",
+    "contact": "Contact",
+    "login": "Sign in",
+    "register": "Get started",
+    "dashboard": "Dashboard"
+  },
+  "app": {
+    "overview": "Overview",
+    "stocks": "Stock predictions",
+    "sports": "Sports predictions",
+    "billing": "Plan & billing",
+    "settings": "Settings",
+    "logout": "Sign out",
+    "viewSite": "View website"
+  },
+  "footer": {
+    "product": "Product",
+    "company": "Company",
+    "contact": "Contact",
+    "rights": "All rights reserved."
+  },
+  "auth": {
+    "welcomeBack": "Welcome back",
+    "loginSubtitle": "Sign in to your {{siteName}} account",
+    "createAccount": "Create your account",
+    "registerSubtitle": "Start free on {{siteName}} — no card required",
+    "email": "Email",
+    "password": "Password",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "phone": "Phone (optional)",
+    "noAccount": "New here?",
+    "haveAccount": "Already have an account?",
+    "signIn": "Sign in",
+    "signUp": "Create account"
+  },
+  "common": {
+    "loading": "Loading…",
+    "save": "Save changes",
+    "comingSoon": "Coming soon"
+  }
+}
