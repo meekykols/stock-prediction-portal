@@ -15,7 +15,8 @@
     "billing": "Plan & billing",
     "settings": "Settings",
     "logout": "Sign out",
-    "viewSite": "View website"
+    "viewSite": "View website",
+    "history": "History"
   },
   "footer": {
     "product": "Product",

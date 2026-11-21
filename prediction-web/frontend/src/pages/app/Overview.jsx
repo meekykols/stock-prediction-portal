@@ -1,10 +1,14 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowUpRight, CandlestickChart, Crown, History, Trophy, Zap } from 'lucide-react';
 import PageHeader from './PageHeader';
 import EmptyState from '../../components/ui/EmptyState';
+import PredictionList from '../../components/predictions/PredictionList';
+import { predictionsApi } from '../../api/endpoints';
 import { useAuth } from '../../hooks/useAuth';
+import { usePredictionUsage } from '../../hooks/usePredictionUsage';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
-import { formatDate, formatLimit } from '../../utils/format';
+import { formatDate } from '../../utils/format';
 
 function StatTile({ icon: Icon, label, value, hint, tone = 'primary' }) {
   const tones = {
@@ -24,31 +28,40 @@ function StatTile({ icon: Icon, label, value, hint, tone = 'primary' }) {
   );
 }
 
+const usageValue = (u) => (!u ? '—' : u.limit === -1 ? `${u.used}` : `${u.used} / ${u.limit}`);
+const usageHint = (u) => (!u ? '' : u.limit === -1 ? 'Unlimited on your plan' : `${u.remaining} left today`);
+
 export default function Overview() {
   useDocumentTitle('Overview');
   const { user, plan, subscription } = useAuth();
+  const { usage } = usePredictionUsage();
+  const [recent, setRecent] = useState(null);
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+
+  useEffect(() => {
+    predictionsApi.list({ limit: 6 }).then((d) => setRecent(d.items)).catch(() => setRecent([]));
+  }, []);
 
   return (
     <>
       <PageHeader
         title={`${greeting}, ${user?.firstName}`}
-        subtitle="Here is what your plan includes today."
+        subtitle="Your plan and today's activity at a glance."
         actions={<Link to="/app/stocks" className="btn btn-primary"><Zap className="size-4" /> New prediction</Link>}
       />
 
       <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
         <StatTile icon={Crown} label="Current plan" value={plan?.name ?? '—'} hint={subscription?.endsAt ? `Renews ${formatDate(subscription.endsAt)}` : 'Free forever'} />
-        <StatTile icon={CandlestickChart} label="Stock predictions / day" value={formatLimit(plan?.limits?.stockPredictionsPerDay ?? 0)} tone="secondary" />
-        <StatTile icon={Trophy} label="Sports predictions / day" value={formatLimit(plan?.limits?.sportsPredictionsPerDay ?? 0)} tone="accent" />
+        <StatTile icon={CandlestickChart} label="Stock predictions today" value={usageValue(usage?.stock)} hint={usageHint(usage?.stock)} tone="secondary" />
+        <StatTile icon={Trophy} label="Sports predictions today" value={usageValue(usage?.sports)} hint={usageHint(usage?.sports)} tone="accent" />
         <StatTile icon={Zap} label="Premium signals" value={plan?.limits?.premiumSignals ? 'On' : 'Off'} hint={plan?.limits?.premiumSignals ? 'Included in your plan' : 'Available on paid plans'} />
       </div>
 
       <div className="mt-8 grid gap-5 lg:grid-cols-2">
         {[
           { to: '/app/stocks', icon: CandlestickChart, title: 'Stock predictions', text: 'Forecast a ticker with the LSTM model and review its accuracy.' },
-          { to: '/app/sports', icon: Trophy, title: 'Sports predictions', text: 'Browse upcoming fixtures and model-backed match outlooks.' },
+          { to: '/app/sports', icon: Trophy, title: 'Sports predictions', text: 'Browse fixtures and get win, draw and goals probabilities.' },
         ].map(({ to, icon: Icon, title, text }) => (
           <Link key={to} to={to} className="glass-card glass-card-hover group flex items-start gap-4 p-6">
             <div className="grid size-12 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-primary/20 to-secondary/20 text-primary"><Icon className="size-6" /></div>
@@ -61,10 +74,17 @@ export default function Overview() {
         ))}
       </div>
 
-      <h2 className="mt-12 mb-4 text-lg font-semibold">Recent predictions</h2>
-      <EmptyState icon={History} title="No predictions yet">
-        Predictions you run will appear here with their charts and accuracy metrics.
-      </EmptyState>
+      <div className="mt-12 mb-4 flex items-center justify-between">
+        <h2 className="text-lg font-semibold">Recent predictions</h2>
+        {recent?.length > 0 && <Link to="/app/history" className="link link-hover text-sm">View all</Link>}
+      </div>
+      {recent === null ? (
+        <div className="skeleton h-40 rounded-box" />
+      ) : recent.length ? (
+        <PredictionList items={recent} />
+      ) : (
+        <EmptyState icon={History} title="No predictions yet">Predictions you run will appear here with their charts and accuracy metrics.</EmptyState>
+      )}
     </>
   );
 }

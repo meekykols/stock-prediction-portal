@@ -2,14 +2,18 @@ import { Router } from 'express';
 import * as auth from '../../controllers/frontend/auth.controller.js';
 import * as account from '../../controllers/frontend/account.controller.js';
 import * as pub from '../../controllers/frontend/public.controller.js';
+import * as predictions from '../../controllers/frontend/prediction.controller.js';
 import { requireAuth } from '../../middlewares/auth.js';
 import { validate } from '../../middlewares/validate.js';
-import { authLimiter, contactLimiter } from '../../middlewares/rateLimit.js';
+import { authLimiter, contactLimiter, predictionLimiter } from '../../middlewares/rateLimit.js';
 import { uploadImage } from '../../middlewares/upload.js';
 import {
   changePasswordRules, loginRules, registerRules, updateProfileRules,
 } from '../../validators/auth.validator.js';
 import { contactRules } from '../../validators/contact.validator.js';
+import {
+  fixturesRules, listPredictionRules, predictionIdRules, sportsPredictionRules, stockPredictionRules,
+} from '../../validators/prediction.validator.js';
 
 const router = Router();
 
@@ -30,5 +34,13 @@ router.patch('/account/profile', requireAuth, validate(updateProfileRules), acco
 router.patch('/account/password', requireAuth, validate(changePasswordRules), account.changePassword);
 router.post('/account/avatar', requireAuth, uploadImage.single('image'), account.uploadAvatar);
 router.get('/account/subscriptions', requireAuth, account.subscriptionHistory);
+
+// Predictions
+router.get('/predictions/usage', requireAuth, predictions.usage);
+router.get('/predictions', requireAuth, validate(listPredictionRules), predictions.list);
+router.get('/predictions/:id', requireAuth, validate(predictionIdRules), predictions.show);
+router.post('/predictions/stocks', requireAuth, predictionLimiter, validate(stockPredictionRules), predictions.createStock);
+router.post('/predictions/sports', requireAuth, predictionLimiter, validate(sportsPredictionRules), predictions.createSports);
+router.get('/sports/fixtures', requireAuth, validate(fixturesRules), predictions.fixtures);
 
 export default router;

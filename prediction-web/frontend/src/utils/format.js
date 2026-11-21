@@ -21,3 +21,26 @@ export const initials = (user) =>
 
 export const telHref = (phone) => `tel:${String(phone).replace(/[^\d+]/g, '')}`;
 export const waHref = (phone) => `https://wa.me/${String(phone).replace(/\D/g, '')}`;
+
+export function formatPrice(value, currency, locale = 'en-US') {
+  if (value === null || value === undefined) return '—';
+  try {
+    return new Intl.NumberFormat(locale, { style: 'currency', currency: currency || 'USD', maximumFractionDigits: 2 }).format(value);
+  } catch {
+    return Number(value).toFixed(2);
+  }
+}
+
+export const formatPct = (value, digits = 1) =>
+  value === null || value === undefined ? '—' : `${value > 0 ? '+' : ''}${Number(value).toFixed(digits)}%`;
+
+export const formatProb = (p) => `${Math.round((p || 0) * 100)}%`;
+
+export function formatDateTime(value) {
+  if (!value) return '—';
+  return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
+}
+
+export function formatTime(value) {
+  return new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' }).format(new Date(value));
+}

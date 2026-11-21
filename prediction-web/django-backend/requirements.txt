@@ -1,0 +1,11 @@
+django>=5.2,<6.1
+djangorestframework>=3.16
+python-decouple>=3.8
+keras>=3.10
+jax>=0.6            # Keras backend (CPU). Swap for tensorflow if you prefer.
+numpy>=2.0
+pandas>=2.2
+scikit-learn>=1.6
+yfinance>=0.2.60
+requests>=2.32
+gunicorn>=23.0

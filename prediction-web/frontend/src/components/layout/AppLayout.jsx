@@ -3,7 +3,7 @@ import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import {
-  CandlestickChart, CreditCard, Globe, LayoutDashboard, LogOut, Menu, Settings, Trophy,
+  CandlestickChart, CreditCard, Globe, History, LayoutDashboard, LogOut, Menu, Settings, Trophy,
 } from 'lucide-react';
 import Logo from '../ui/Logo';
 import ThemeToggle from '../ui/ThemeToggle';
@@ -19,6 +19,7 @@ const NAV = [
   { to: '/app', key: 'overview', icon: LayoutDashboard, end: true },
   { to: '/app/stocks', key: 'stocks', icon: CandlestickChart },
   { to: '/app/sports', key: 'sports', icon: Trophy },
+  { to: '/app/history', key: 'history', icon: History },
   { to: '/app/billing', key: 'billing', icon: CreditCard },
   { to: '/app/settings', key: 'settings', icon: Settings },
 ];

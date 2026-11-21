@@ -32,5 +32,10 @@ export function errorHandler(err, _req, res, _next) {
     if (env.isProd && !(err instanceof ApiError)) message = 'Something went wrong';
   }
 
-  res.status(status).json({ success: false, message, ...(details && { errors: details }) });
+  res.status(status).json({
+    success: false,
+    message,
+    ...(err.errorCode && { code: err.errorCode }),
+    ...(details && { errors: details }),
+  });
 }

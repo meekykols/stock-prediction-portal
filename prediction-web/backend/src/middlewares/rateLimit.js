@@ -26,3 +26,12 @@ export const contactLimiter = rateLimit({
   legacyHeaders: false,
   message,
 });
+
+// Burst guard on the expensive ML calls; daily plan quotas are enforced separately.
+export const predictionLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 10,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message,
+});
