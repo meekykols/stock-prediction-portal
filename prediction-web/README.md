@@ -81,8 +81,34 @@ Browser ──► Express /api/v1/predictions/* ──► Django /v1/* (X-Servic
   (`Resources/stock_prediction_using_LSTM.ipynb`). Its next-day direction accuracy is around 50%,
   so the UI shows that figure prominently.
 
+## Billing (Phase 4, Paystack)
+
+Uses Paystack **Subscriptions**, so Paystack runs the recurring charges.
+
+1. `POST /api/v1/billing/checkout { plan }`: creates the Paystack plan on first use, records a pending
+   payment and returns Paystack's hosted checkout URL.
+2. Paystack redirects to `<APP_URL>/app/billing/callback?reference=…`; the page calls
+   `GET /api/v1/billing/verify/:reference`, which confirms the charge with Paystack (amount and
+   currency are checked) and opens the subscription.
+3. `POST /api/webhooks/paystack` (HMAC-SHA512 signature checked) handles `charge.success` (first payment
+   and renewals), `subscription.create`, `subscription.not_renew`, `subscription.disable` and
+   `invoice.payment_failed`. The callback and webhook paths are both idempotent.
+
+Self-service: `GET /billing/summary`, `GET /billing/payments`, `POST /billing/cancel` (turns off
+auto-renew, access continues to the period end), `POST /billing/resume`, `GET /billing/manage-card`.
+
+- Switching plans starts the new plan immediately and cancels the old one at Paystack (no proration).
+- Auto-renewing subscriptions keep access for 24 h past their end date while a renewal settles.
+- Changing a plan's price/interval in the admin API makes checkout create a new Paystack plan;
+  existing subscribers stay on their original price.
+- Stale unpaid checkouts are marked abandoned hourly.
+
+**Setup:** add `PAYSTACK_SECRET_KEY` and `APP_URL` to `backend/.env`, register
+`https://<api-domain>/api/webhooks/paystack` as the webhook URL in the Paystack dashboard, then optionally
+run `npm run paystack:sync` to create the Paystack plans up front. For local webhook testing, expose the
+API with a tunnel (e.g. ngrok) and use that URL. `npm test` runs the billing unit tests.
+
 ## Roadmap
 
-4. Paystack checkout, webhooks, plan-based limits
 5. Admin console
 6. Live chat (Socket.IO) and scheduled prediction runs

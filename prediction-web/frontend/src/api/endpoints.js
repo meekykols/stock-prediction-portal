@@ -27,3 +27,13 @@ export const predictionsApi = {
   createSports: (body) => unwrap(api.post('/predictions/sports', body)),
   fixtures: (date) => unwrap(api.get('/sports/fixtures', { params: date ? { date } : {} })),
 };
+
+export const billingApi = {
+  summary: () => unwrap(api.get('/billing/summary')),
+  payments: () => unwrap(api.get('/billing/payments')),
+  checkout: (plan) => unwrap(api.post('/billing/checkout', { plan })),
+  verify: (reference) => unwrap(api.get(`/billing/verify/${encodeURIComponent(reference)}`)),
+  cancel: () => api.post('/billing/cancel').then((r) => r.data),
+  resume: () => api.post('/billing/resume').then((r) => r.data),
+  manageCard: () => unwrap(api.get('/billing/manage-card')),
+};

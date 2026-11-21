@@ -9,6 +9,7 @@ import frontendRoutes from './routes/frontend/index.js';
 import adminRoutes from './routes/admin/index.js';
 import { apiLimiter } from './middlewares/rateLimit.js';
 import { errorHandler, notFound } from './middlewares/error.js';
+import { paystackWebhook } from './controllers/webhooks/paystack.controller.js';
 
 export function createApp() {
   const app = express();
@@ -19,6 +20,10 @@ export function createApp() {
   app.use(helmet());
   app.use(cors({ origin: env.clientUrls, credentials: true }));
   app.use(compression());
+
+  // Webhooks need the raw body for signature checks, so they go before express.json().
+  app.post('/api/webhooks/paystack', express.raw({ type: '*/*', limit: '1mb' }), paystackWebhook);
+
   app.use(express.json({ limit: '1mb' }));
   app.use(cookieParser());
   if (!env.isProd) app.use(morgan('dev'));

@@ -23,11 +23,15 @@ const subscriptionSchema = new mongoose.Schema(
     startsAt: Date,
     endsAt: { type: Date, index: true },
     cancelledAt: Date,
+    cancelReason: { type: String, enum: ['user', 'replaced', 'provider', 'admin'] },
+    paymentIssueAt: Date, // last failed renewal; cleared on the next successful charge
     paystack: {
-      reference: String,
-      subscriptionCode: String,
-      customerCode: String,
+      reference: String, // first payment
+      planCode: { type: String, index: true },
+      subscriptionCode: { type: String, index: true, sparse: true },
       emailToken: String,
+      customerCode: String,
+      customerId: Number,
       authorizationCode: String,
     },
   },
@@ -38,7 +42,10 @@ const subscriptionSchema = new mongoose.Schema(
       transform(_doc, ret) {
         delete ret.__v;
         delete ret._id;
-        if (ret.paystack) delete ret.paystack.authorizationCode;
+        if (ret.paystack) {
+          delete ret.paystack.authorizationCode;
+          delete ret.paystack.emailToken;
+        }
         return ret;
       },
     },

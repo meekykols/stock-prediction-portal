@@ -24,6 +24,7 @@ const Billing = lazy(() => import('./pages/app/Billing'));
 const Settings = lazy(() => import('./pages/app/Settings'));
 const History = lazy(() => import('./pages/app/History'));
 const PredictionDetail = lazy(() => import('./pages/app/PredictionDetail'));
+const BillingCallback = lazy(() => import('./pages/app/BillingCallback'));
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -66,6 +67,7 @@ export default function App() {
               <Route path="history" element={<History />} />
               <Route path="predictions/:id" element={<PredictionDetail />} />
               <Route path="billing" element={<Billing />} />
+              <Route path="billing/callback" element={<BillingCallback />} />
               <Route path="settings" element={<Settings />} />
             </Route>
           </Route>

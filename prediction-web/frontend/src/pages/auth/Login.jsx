@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
@@ -15,8 +15,6 @@ export default function Login() {
   useDocumentTitle(t('auth.signIn'));
   const { siteName } = useSiteConfig();
   const dispatch = useDispatch();
-  const navigate = useNavigate();
-  const location = useLocation();
   const [form, setForm] = useState({ email: '', password: '' });
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
@@ -31,7 +29,7 @@ export default function Login() {
     setSubmitting(false);
     if (login.fulfilled.match(result)) {
       toast.success(`Welcome back, ${result.payload.user.firstName}`);
-      navigate(location.state?.from?.pathname || '/app', { replace: true });
+      // GuestRoute redirects to where the user was heading.
     } else {
       setErrors(result.payload?.fields || {});
       toast.error(result.payload?.message || 'Could not sign in');

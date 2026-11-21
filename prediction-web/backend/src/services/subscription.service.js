@@ -1,9 +1,29 @@
 import { Plan, Subscription, SUBSCRIPTION_STATUS } from '../models/index.js';
 
-const LIVE_STATUSES = [SUBSCRIPTION_STATUS.ACTIVE, SUBSCRIPTION_STATUS.NON_RENEWING];
+const { ACTIVE, NON_RENEWING, EXPIRED } = SUBSCRIPTION_STATUS;
+
+// Auto-renewing subscriptions keep access for a day past `endsAt`, so a renewal
+// charge that lands a few hours late never locks a paying customer out.
+export const RENEWAL_GRACE_MS = 24 * 60 * 60 * 1000;
+
+/** Mongo filter for subscriptions that currently grant access. */
+export function liveSubscriptionFilter(now = new Date()) {
+  return {
+    $or: [
+      { status: ACTIVE, endsAt: { $gt: new Date(now.getTime() - RENEWAL_GRACE_MS) } },
+      { status: NON_RENEWING, endsAt: { $gt: now } },
+    ],
+  };
+}
 
 export function getFreePlan() {
   return Plan.findOne({ price: 0, isActive: true }).sort({ sortOrder: 1 });
+}
+
+export function getLiveSubscription(userId) {
+  return Subscription.findOne({ user: userId, ...liveSubscriptionFilter() })
+    .sort({ endsAt: -1 })
+    .populate('plan');
 }
 
 /**
@@ -11,36 +31,31 @@ export function getFreePlan() {
  * or the free plan when they have none.
  */
 export async function getCurrentEntitlement(userId) {
-  const subscription = await Subscription.findOne({
-    user: userId,
-    status: { $in: LIVE_STATUSES },
-    endsAt: { $gt: new Date() },
-  })
-    .sort({ endsAt: -1 })
-    .populate('plan');
-
+  const subscription = await getLiveSubscription(userId);
   if (subscription?.plan) {
-    return {
-      plan: subscription.plan,
-      status: subscription.status,
-      endsAt: subscription.endsAt,
-      subscription,
-    };
+    return { plan: subscription.plan, status: subscription.status, endsAt: subscription.endsAt, subscription };
   }
-
   const freePlan = await getFreePlan();
   return { plan: freePlan, status: 'free', endsAt: null, subscription: null };
 }
 
 export function listUserSubscriptions(userId) {
-  return Subscription.find({ user: userId }).sort({ createdAt: -1 }).populate('plan').limit(50);
+  return Subscription.find({ user: userId, status: { $ne: SUBSCRIPTION_STATUS.PENDING } })
+    .sort({ createdAt: -1 })
+    .populate('plan')
+    .limit(50);
 }
 
 /** Called by the scheduler. Marks lapsed subscriptions as expired. */
-export async function expireLapsedSubscriptions() {
+export async function expireLapsedSubscriptions(now = new Date()) {
   const result = await Subscription.updateMany(
-    { status: { $in: LIVE_STATUSES }, endsAt: { $lte: new Date() } },
-    { status: SUBSCRIPTION_STATUS.EXPIRED },
+    {
+      $or: [
+        { status: ACTIVE, endsAt: { $lte: new Date(now.getTime() - RENEWAL_GRACE_MS) } },
+        { status: NON_RENEWING, endsAt: { $lte: now } },
+      ],
+    },
+    { status: EXPIRED },
   );
   return result.modifiedCount;
 }

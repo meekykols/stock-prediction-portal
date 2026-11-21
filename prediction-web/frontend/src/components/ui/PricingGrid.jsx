@@ -28,7 +28,7 @@ export default function PricingGrid() {
     <div className={`grid items-stretch gap-6 ${items.length >= 3 ? 'lg:grid-cols-3' : 'md:grid-cols-2'}`}>
       {items.map((plan) => {
         const isCurrent = currentPlan?.id === plan.id;
-        const to = isAuthenticated ? '/app/billing' : `/register?plan=${plan.slug}`;
+        const to = isAuthenticated ? `/app/billing?plan=${plan.slug}` : `/register?plan=${plan.slug}`;
         return (
           <PlanCard
             key={plan.id}

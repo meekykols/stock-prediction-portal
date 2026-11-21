@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
@@ -15,9 +15,9 @@ export default function Register() {
   useDocumentTitle(t('auth.signUp'));
   const { siteName } = useSiteConfig();
   const dispatch = useDispatch();
-  const navigate = useNavigate();
   const [params] = useSearchParams();
   const chosenPlan = params.get('plan');
+  const loginLink = chosenPlan ? `/login?plan=${encodeURIComponent(chosenPlan)}` : '/login';
 
   const [form, setForm] = useState({ firstName: '', lastName: '', email: '', phone: '', password: '' });
   const [errors, setErrors] = useState({});
@@ -33,8 +33,7 @@ export default function Register() {
     setSubmitting(false);
     if (register.fulfilled.match(result)) {
       toast.success(`Welcome to ${siteName}!`);
-      const wantsPaid = chosenPlan && chosenPlan !== result.payload.subscription?.plan?.slug;
-      navigate(wantsPaid ? `/app/billing?plan=${encodeURIComponent(chosenPlan)}` : '/app', { replace: true });
+      // GuestRoute redirects (to billing when a paid plan was chosen).
     } else {
       setErrors(result.payload?.fields || {});
       toast.error(result.payload?.message || 'Could not create account');
@@ -45,7 +44,7 @@ export default function Register() {
     <AuthShell
       title={t('auth.createAccount')}
       subtitle={t('auth.registerSubtitle', { siteName })}
-      footer={<>{t('auth.haveAccount')} <Link to="/login" className="link link-primary font-medium">{t('auth.signIn')}</Link></>}
+      footer={<>{t('auth.haveAccount')} <Link to={loginLink} className="link link-primary font-medium">{t('auth.signIn')}</Link></>}
     >
       <form onSubmit={onSubmit} noValidate className="space-y-1">
         <div className="grid gap-x-4 sm:grid-cols-2">

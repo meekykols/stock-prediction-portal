@@ -32,7 +32,10 @@ export const env = {
   paystack: {
     secretKey: process.env.PAYSTACK_SECRET_KEY || '',
     publicKey: process.env.PAYSTACK_PUBLIC_KEY || '',
+    baseUrl: process.env.PAYSTACK_BASE_URL || 'https://api.paystack.co',
   },
+  // Public URL of the customer site (Paystack redirects here after checkout).
+  appUrl: (process.env.APP_URL || (process.env.CLIENT_URLS || 'http://localhost:5173').split(',')[0]).trim().replace(/\/$/, ''),
   mlService: {
     url: process.env.ML_SERVICE_URL || 'http://127.0.0.1:8000',
     apiKey: process.env.ML_SERVICE_API_KEY || '',

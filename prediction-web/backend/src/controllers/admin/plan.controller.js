@@ -14,6 +14,9 @@ export const update = asyncHandler(async (req, res) => {
   const plan = await Plan.findById(req.params.id);
   if (!plan) throw ApiError.notFound('Plan not found');
   plan.set(req.body);
+  if (plan.isModified('price') || plan.isModified('interval') || plan.isModified('currency')) {
+    plan.paystackPlanCode = undefined;
+  }
   await plan.save();
   res.json({ success: true, data: plan });
 });
