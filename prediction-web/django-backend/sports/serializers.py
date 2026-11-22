@@ -31,5 +31,12 @@ class EventsQuery(serializers.Serializer):
         return value
 
 
+class OddsConfig(serializers.Serializer):
+    weight = serializers.FloatField(min_value=0, max_value=1, default=0.6)
+    max = serializers.IntegerField(min_value=0, max_value=1000, default=40)
+    valueEdge = serializers.FloatField(min_value=0, max_value=0.5, default=0.05)
+
+
 class TipsRequest(EventsQuery):
     leagues = serializers.ListField(child=serializers.IntegerField(min_value=0), required=False, allow_empty=True, max_length=200)
+    odds = OddsConfig(required=False, allow_null=True)

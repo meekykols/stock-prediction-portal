@@ -21,13 +21,17 @@ const tipSchema = new mongoose.Schema(
     model: { _id: false, name: String, description: String },
     prediction: {
       _id: false,
-      pick: { _id: false, market: String, outcome: String, probability: Number },
+      pick: { _id: false, market: String, outcome: String, probability: Number, odds: Number },
       probabilities: Mixed,
       predictedScore: Mixed,
       markets: Mixed,
       confidence: { type: String, enum: ['low', 'medium', 'high'] },
       details: Mixed,
       inputs: Mixed,
+      source: { type: String, enum: ['model', 'blend', 'market'], default: 'model' },
+      model: Mixed, // the model's own chances, kept to measure model vs market
+      market: Mixed, // bookmakers' consensus: odds, margin-free chances, margin
+      value: Mixed, // outcome the model rates clearly above the bookmakers
     },
     featured: { type: Boolean, default: false }, // "Top tip"
     generatedAt: Date,
@@ -40,6 +44,8 @@ const tipSchema = new mongoose.Schema(
       markets: Mixed, // [{key, line, outcome, won}]
       settledAt: Date,
       note: String,
+      // Profit per 1-unit stake at the consensus price (won: odds - 1, lost: -1, void: 0).
+      returns: { _id: false, pick: Number, value: Number },
     },
   },
   {

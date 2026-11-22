@@ -66,7 +66,7 @@ def tips(request):
     params = TipsRequest(data=request.data)
     params.is_valid(raise_exception=True)
     v = params.validated_data
-    return Response({"success": True, "data": build_tips(v["sport"], v["date"].isoformat(), v.get("leagues"))})
+    return Response({"success": True, "data": build_tips(v["sport"], v["date"].isoformat(), v.get("leagues"), v.get("odds"))})
 
 
 @api_view(["GET"])

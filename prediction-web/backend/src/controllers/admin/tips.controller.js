@@ -23,7 +23,8 @@ export const config = asyncHandler(async (_req, res) => {
 
 export const updateConfig = asyncHandler(async (req, res) => {
   const doc = await TipsConfig.getSingleton();
-  const { enabled, sports, fullAccessPlans, previewCount, featuredConfidence } = req.body;
+  const { enabled, sports, fullAccessPlans, previewCount, featuredConfidence, odds } = req.body;
+  if (odds) doc.set('odds', { ...doc.odds.toObject(), ...odds });
   if (enabled !== undefined) doc.enabled = enabled;
   if (previewCount !== undefined) doc.previewCount = previewCount;
   if (featuredConfidence) doc.featuredConfidence = featuredConfidence;
@@ -36,6 +37,10 @@ export const updateConfig = asyncHandler(async (req, res) => {
   }
   await doc.save();
   res.json({ success: true, message: 'Tips settings saved', data: doc });
+});
+
+export const oddsReport = asyncHandler(async (_req, res) => {
+  res.json({ success: true, data: await tips.oddsReport({ days: 90 }) });
 });
 
 export const leagues = asyncHandler(async (req, res) => {

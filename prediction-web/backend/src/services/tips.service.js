@@ -38,7 +38,18 @@ export function evaluateTip(tip, event) {
   };
   if (!event.winner) return { ...result, state: 'void', note: 'No winner recorded' };
   if (event.winner === 'draw' && pick.market === 'winner') return { ...result, state: 'void', note: 'Tie: winner tips are void' };
-  return { ...result, state: event.winner === pick.outcome ? 'won' : 'lost' };
+  const verdict = event.winner === pick.outcome ? 'won' : 'lost';
+  return { ...result, state: verdict, returns: tipReturns(tip.prediction, event.winner, verdict) };
+}
+
+const unitReturn = (won, odds) => (odds ? Math.round((won ? odds - 1 : -1) * 1000) / 1000 : undefined);
+
+/** Profit per 1-unit stake on the pick and on any value selection, at the consensus price. */
+export function tipReturns(prediction, winner, state) {
+  const out = {};
+  if (prediction.pick?.odds) out.pick = unitReturn(state === 'won', prediction.pick.odds);
+  if (prediction.value?.odds) out.value = unitReturn(prediction.value.outcome === winner, prediction.value.odds);
+  return Object.keys(out).length ? out : undefined;
 }
 
 export function settleTips(opts = {}) {
@@ -106,7 +117,7 @@ export function settleTips(opts = {}) {
 
 // ---------------------------------------------------------------- generation
 
-async function saveTip(sport, { event, prediction }, model, config) {
+async function saveTip(sport, { event, prediction, model }, fallbackModel, config) {
   const existing = await Tip.findOne({ sport, eventId: event.id }).select('kickoff result.state');
   // Tips are frozen once the event has started (or been settled), so the record can't be edited after the fact.
   if (existing && (existing.kickoff <= new Date() || existing.result?.state !== 'pending')) return 'frozen';
@@ -121,7 +132,7 @@ async function saveTip(sport, { event, prediction }, model, config) {
         away: event.away,
         extra: event.extra || {},
         status: event.status,
-        model,
+        model: model || fallbackModel,
         prediction,
         featured: CONFIDENCE_RANK[prediction.confidence] >= CONFIDENCE_RANK[config.featuredConfidence],
         generatedAt: new Date(),
@@ -150,7 +161,10 @@ export function generateTips(opts = {}) {
       for (const date of dates) {
         let data;
         try {
-          data = await mlService.sportsTips({ sport, date, leagues: sc.leagues });
+          const odds = config.odds?.enabled
+            ? { weight: config.odds.marketWeight, max: config.odds.maxCallsPerRun, valueEdge: config.odds.valueEdge }
+            : null;
+          data = await mlService.sportsTips({ sport, date, leagues: sc.leagues, odds });
         } catch (err) {
           run.failed += 1;
           run.errors.push(`${sport} ${date}: ${err.message}`);
@@ -190,13 +204,27 @@ export async function trackRecord({ days = 30, sport } = {}) {
   const since = addDays(utcDate(), -days);
   const rows = await Tip.aggregate([
     { $match: { date: { $gte: since }, 'result.state': { $in: ['won', 'lost'] }, ...(sport && { sport }) } },
-    { $group: { _id: { sport: '$sport', featured: '$featured' }, won: { $sum: { $cond: [{ $eq: ['$result.state', 'won'] }, 1, 0] } }, total: { $sum: 1 } } },
+    {
+      $group: {
+        _id: { sport: '$sport', featured: '$featured' },
+        won: { $sum: { $cond: [{ $eq: ['$result.state', 'won'] }, 1, 0] } },
+        total: { $sum: 1 },
+        staked: { $sum: { $cond: [{ $ne: [{ $type: '$result.returns.pick' }, 'missing'] }, 1, 0] } },
+        profit: { $sum: { $ifNull: ['$result.returns.pick', 0] } },
+        valueStaked: { $sum: { $cond: [{ $ne: [{ $type: '$result.returns.value' }, 'missing'] }, 1, 0] } },
+        valueProfit: { $sum: { $ifNull: ['$result.returns.value', 0] } },
+      },
+    },
   ]);
   const out = {};
-  for (const { _id, won, total } of rows) {
-    const s = (out[_id.sport] ||= { won: 0, settled: 0, featuredWon: 0, featuredSettled: 0 });
+  for (const { _id, won, total, staked, profit, valueStaked, valueProfit } of rows) {
+    const s = (out[_id.sport] ||= { won: 0, settled: 0, featuredWon: 0, featuredSettled: 0, staked: 0, profit: 0, valueStaked: 0, valueProfit: 0 });
     s.won += won;
     s.settled += total;
+    s.staked += staked;
+    s.profit += profit;
+    s.valueStaked += valueStaked;
+    s.valueProfit += valueProfit;
     if (_id.featured) {
       s.featuredWon += won;
       s.featuredSettled += total;
@@ -205,6 +233,9 @@ export async function trackRecord({ days = 30, sport } = {}) {
   for (const s of Object.values(out)) {
     s.hitRate = s.settled ? s.won / s.settled : null;
     s.featuredHitRate = s.featuredSettled ? s.featuredWon / s.featuredSettled : null;
+    // Return on stake at bookmaker prices: +0.05 means 5 units profit per 100 staked.
+    s.roi = s.staked ? s.profit / s.staked : null;
+    s.valueRoi = s.valueStaked ? s.valueProfit / s.valueStaked : null;
   }
   return { days, since, sports: out };
 }
@@ -247,6 +278,54 @@ export async function listTips(userId, { sport, date } = {}) {
 
 // ---------------------------------------------------------------- admin
 
+const logLoss = (p) => -Math.log(Math.max(1e-9, p));
+
+/**
+ * Model vs bookmakers vs combinations on settled tips that had both views. Tells staff which
+ * market weight would have scored best, so the setting can follow real results.
+ */
+export async function oddsReport({ days = 90 } = {}) {
+  const since = addDays(utcDate(), -days);
+  const tips = await Tip.find({
+    date: { $gte: since },
+    'result.state': { $in: ['won', 'lost'] },
+    'result.winner': { $exists: true },
+    'prediction.model.probabilities': { $exists: true },
+    'prediction.market.probabilities': { $exists: true },
+  }).select('sport result.winner prediction.model prediction.market');
+
+  const weights = Array.from({ length: 11 }, (_, i) => i / 10);
+  const bySport = {};
+  for (const t of tips) {
+    const s = (bySport[t.sport] ||= { n: 0, modelHits: 0, marketHits: 0, loss: weights.map(() => 0) });
+    const model = t.prediction.model.probabilities;
+    const market = t.prediction.market.probabilities;
+    const winner = t.result.winner;
+    if (!(winner in market)) continue;
+    s.n += 1;
+    const top = (p) => Object.keys(p).reduce((a, b) => (p[a] >= p[b] ? a : b));
+    s.modelHits += top(model) === winner;
+    s.marketHits += top(market) === winner;
+    weights.forEach((w, i) => {
+      const mixed = Object.fromEntries(Object.keys(market).map((k) => [k, w * market[k] + (1 - w) * (model[k] ?? 0)]));
+      const total = Object.values(mixed).reduce((a, b) => a + b, 0);
+      s.loss[i] += logLoss(mixed[winner] / total);
+    });
+  }
+  const sports = Object.fromEntries(Object.entries(bySport).map(([sport, s]) => {
+    const losses = s.loss.map((l) => (s.n ? l / s.n : null));
+    const best = losses.indexOf(Math.min(...losses));
+    return [sport, {
+      n: s.n,
+      modelAccuracy: s.n ? s.modelHits / s.n : null,
+      marketAccuracy: s.n ? s.marketHits / s.n : null,
+      logLoss: Object.fromEntries(weights.map((w, i) => [w.toFixed(1), losses[i]])),
+      bestWeight: s.n ? weights[best] : null,
+    }];
+  }));
+  return { days, since, sports, minimumToTrust: 300 };
+}
+
 export async function adminListTips(query = {}) {
   const filter = {};
   if (SPORTS.includes(query.sport)) filter.sport = query.sport;
@@ -268,6 +347,9 @@ export async function overrideResult(id, { state, note }, user) {
   if (tip.kickoff > new Date()) throw ApiError.badRequest('This event has not started yet');
   tip.set('result.state', state);
   tip.set('result.note', note || `Set manually by ${user.firstName}`);
+  // The winner isn't known from a manual result, so only the pick's return can be worked out.
+  const odds = tip.prediction?.pick?.odds;
+  tip.set('result.returns', state !== 'void' && odds ? { pick: unitReturn(state === 'won', odds) } : undefined);
   tip.set('result.settledAt', new Date());
   await tip.save();
   await settleCodes();

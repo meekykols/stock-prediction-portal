@@ -91,8 +91,8 @@ function Settings({ onSaved }) {
   const save = async () => {
     setSaving(true);
     try {
-      const { enabled, sports, fullAccessPlans, previewCount, featuredConfidence } = config;
-      const res = await tipsApi.saveConfig({ enabled, sports, fullAccessPlans, previewCount, featuredConfidence });
+      const { enabled, sports, fullAccessPlans, previewCount, featuredConfidence, odds } = config;
+      const res = await tipsApi.saveConfig({ enabled, sports, fullAccessPlans, previewCount, featuredConfidence, odds });
       setConfig(res.data);
       toast.success(res.message);
       onSaved?.();
@@ -143,6 +143,23 @@ function Settings({ onSaved }) {
             </select>
           </label>
         </div>
+        <div className="glass-card space-y-3 p-5">
+          <div className="flex items-center justify-between gap-3">
+            <h3 className="font-semibold">Bookmaker odds</h3>
+            <input type="checkbox" className="toggle toggle-primary toggle-sm" checked={config.odds?.enabled ?? true} onChange={(e) => setConfig({ ...config, odds: { ...config.odds, enabled: e.target.checked } })} aria-label="Use bookmaker odds" />
+          </div>
+          <p className="text-xs text-base-content/60">Odds are combined with the model, or used alone when the model has no data for a competition.</p>
+          <label className="block text-sm">Bookmakers&apos; share of each tip: <span className="font-mono">{Math.round((config.odds?.marketWeight ?? 0.6) * 100)}%</span>
+            <input type="range" min={0} max={1} step={0.1} className="range range-xs range-primary mt-1" value={config.odds?.marketWeight ?? 0.6} onChange={(e) => setConfig({ ...config, odds: { ...config.odds, marketWeight: Number(e.target.value) } })} />
+          </label>
+          <label className="flex items-center justify-between gap-3 text-sm">Value when model beats odds by
+            <span className="flex items-center gap-1"><input type="number" min={1} max={50} className="input input-sm w-16" value={Math.round((config.odds?.valueEdge ?? 0.05) * 100)} onChange={(e) => setConfig({ ...config, odds: { ...config.odds, valueEdge: Number(e.target.value) / 100 } })} />%</span>
+          </label>
+          <label className="flex items-center justify-between gap-3 text-sm">Odds requests per sport per day
+            <input type="number" min={0} max={1000} className="input input-sm w-20" value={config.odds?.maxCallsPerRun ?? 40} onChange={(e) => setConfig({ ...config, odds: { ...config.odds, maxCallsPerRun: Number(e.target.value) } })} />
+          </label>
+          <p className="text-xs text-base-content/50">Each match costs one request. Free API plans allow 100 a day per sport, shared with fixtures and results.</p>
+        </div>
         <div className="glass-card flex flex-col gap-3 p-5">
           <label className="label cursor-pointer justify-between text-sm">Scheduled runs enabled
             <input type="checkbox" className="toggle toggle-success" checked={config.enabled} onChange={(e) => setConfig({ ...config, enabled: e.target.checked })} />
@@ -177,6 +194,35 @@ function Runs({ runs }) {
           ))}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+function OddsReport() {
+  const [report, setReport] = useState(null);
+  useEffect(() => { tipsApi.oddsReport().then(setReport).catch(() => {}); }, []);
+  const rows = Object.entries(report?.sports || {});
+  return (
+    <div className="mt-6">
+      <h2 className="mb-1 font-semibold">Model vs bookmakers</h2>
+      <p className="mb-3 text-xs text-base-content/60">
+        Settled tips from the last {report?.days ?? 90} days that had both views. &quot;Best share&quot; is the bookmakers&apos; share that would have scored best (lowest log loss).
+        Wait for at least {report?.minimumToTrust ?? 300} matches before changing the setting.
+      </p>
+      {!rows.length ? <div className="glass-card p-5 text-sm text-base-content/60">No settled tips with both a model and bookmaker view yet.</div> : (
+        <div className="glass-card overflow-x-auto">
+          <table className="table table-sm">
+            <thead><tr><th>Sport</th><th className="text-right">Matches</th><th className="text-right">Model right</th><th className="text-right">Bookmakers right</th><th className="text-right">Best share</th></tr></thead>
+            <tbody>{rows.map(([s, r]) => (
+              <tr key={s}>
+                <td>{SPORTS[s]}</td><td className="text-right font-mono">{r.n}</td>
+                <td className="text-right font-mono">{pct(r.modelAccuracy)}</td><td className="text-right font-mono">{pct(r.marketAccuracy)}</td>
+                <td className="text-right font-mono">{r.bestWeight == null ? '—' : `${Math.round(r.bestWeight * 100)}%`}{r.n < (report.minimumToTrust ?? 300) && <span className="ml-1 text-xs text-warning">(too few)</span>}</td>
+              </tr>
+            ))}</tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
@@ -242,12 +288,14 @@ export default function Tips() {
               <p className="text-xs text-base-content/60">{label} · 30 days</p>
               <p className="mt-1 font-display text-2xl font-semibold">{pct(d?.hitRate)}</p>
               <p className="text-xs text-base-content/50">{d ? `${d.won}/${d.settled} correct · top tips ${pct(d.featuredHitRate)}` : 'No settled tips yet'}</p>
+              {d?.staked > 0 && <p className={`text-xs ${d.roi >= 0 ? 'text-success' : 'text-error'}`}>{d.roi >= 0 ? '+' : ''}{(d.roi * 100).toFixed(1)}% at odds ({d.staked}){d.valueStaked ? ` · value ${d.valueRoi >= 0 ? '+' : ''}${(d.valueRoi * 100).toFixed(1)}% (${d.valueStaked})` : ''}</p>}
             </div>
           );
         })}
       </div>
 
       <Settings onSaved={loadRuns} />
+      <OddsReport />
 
       <h2 className="mb-3 mt-10 font-semibold">Recent runs</h2>
       <Runs runs={runs} />
@@ -283,6 +331,9 @@ export default function Tips() {
                       <td><p className="font-medium">{t.home?.name} v {t.away?.name}</p><p className="text-xs text-base-content/50">{t.league?.name}</p></td>
                       <td className="whitespace-nowrap">
                         {t.featured && <Flame className="mr-1 inline size-3.5 text-primary" />}{pickText(t)}
+                        {t.prediction?.pick?.odds && <span className="ml-1 font-mono text-xs text-base-content/50">@{t.prediction.pick.odds}</span>}
+                        {t.prediction?.source === 'market' && <span className="badge badge-xs badge-ghost ml-1">bookmakers</span>}
+                        {t.prediction?.value && <span className="badge badge-xs badge-accent badge-soft ml-1">value</span>}
                         {t.prediction?.predictedScore && <span className="ml-1 font-mono text-xs text-base-content/50">{t.prediction.predictedScore.home}–{t.prediction.predictedScore.away}</span>}
                       </td>
                       <td className="text-right font-mono">{pct(t.prediction?.pick?.probability)}</td>

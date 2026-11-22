@@ -79,6 +79,7 @@ router.post('/signals/run', requirePermission(P.PREDICTIONS_MANAGE), validate(ru
 const tipsPerm = requirePermission(P.TIPS_MANAGE);
 router.get('/tips', tipsPerm, tips.list);
 router.get('/tips/stats', tipsPerm, tips.stats);
+router.get('/tips/odds-report', tipsPerm, tips.oddsReport);
 router.get('/tips/config', tipsPerm, tips.config);
 router.put('/tips/config', tipsPerm, validate(tipsConfigRules), tips.updateConfig);
 router.get('/tips/leagues', tipsPerm, validate(leaguesRules), tips.leagues);
