@@ -19,3 +19,6 @@ export { ContestConfig } from './ContestConfig.js';
 export { Slip } from './Slip.js';
 export { ContestReward } from './ContestReward.js';
 export { Promo } from './Promo.js';
+export { CryptoSignal } from './CryptoSignal.js';
+export { CryptoConfig } from './CryptoConfig.js';
+export { TelegramLink } from './TelegramLink.js';

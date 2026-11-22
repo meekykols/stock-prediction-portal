@@ -9,6 +9,8 @@ import * as signals from '../../controllers/frontend/signal.controller.js';
 import * as tips from '../../controllers/frontend/tips.controller.js';
 import * as codes from '../../controllers/frontend/codes.controller.js';
 import * as contest from '../../controllers/frontend/contest.controller.js';
+import * as crypto from '../../controllers/frontend/crypto.controller.js';
+import { feedRules } from '../../validators/crypto.validator.js';
 import { monthQuery, submitSlipRules } from '../../validators/contest.validator.js';
 import { listCodesRules } from '../../validators/codes.validator.js';
 import { listTipsRules } from '../../validators/tips.validator.js';
@@ -50,6 +52,12 @@ router.get('/contest/slips', requireAuth, contest.slips);
 router.get('/contest/leaderboard', optionalAuth, validate(monthQuery), contest.leaderboard);
 router.get('/contest/winners', contest.winners);
 router.get('/promos', contest.promos);
+
+// Crypto futures signals and Telegram alerts
+router.get('/crypto-signals', requireAuth, validate(feedRules), crypto.feed);
+router.get('/telegram', requireAuth, crypto.telegramStatus);
+router.post('/telegram/link', requireAuth, contestLimiter, crypto.telegramLink);
+router.delete('/telegram', requireAuth, crypto.telegramUnlink);
 
 // Auth
 router.post('/auth/register', authLimiter, validate(registerRules), auth.register);

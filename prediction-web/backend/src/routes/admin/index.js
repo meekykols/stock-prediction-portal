@@ -13,6 +13,8 @@ import * as signals from '../../controllers/admin/signal.controller.js';
 import * as tips from '../../controllers/admin/tips.controller.js';
 import * as codes from '../../controllers/admin/codes.controller.js';
 import * as contest from '../../controllers/admin/contest.controller.js';
+import * as crypto from '../../controllers/admin/crypto.controller.js';
+import { createSignalRules, cryptoConfigRules, marketRules, signalIdRules } from '../../validators/crypto.validator.js';
 import { awardRules, contestConfigRules, exportRules, monthQuery, promoRules } from '../../validators/contest.validator.js';
 import {
   codeResultRules, codesConfigRules, createCodeRules, selectionResultRules, tipSearchRules, updateCodeRules,
@@ -111,6 +113,18 @@ router.get('/promos', contestPerm, contest.promos);
 router.post('/promos', contestPerm, contest.createPromo);
 router.patch('/promos/:id', contestPerm, validate(promoRules), contest.updatePromo);
 router.post('/promos/:id/image', contestPerm, id, uploadImage.single('image'), contest.uploadPromoImage);
+
+const cryptoPerm = requirePermission(P.CRYPTO_SIGNALS);
+router.get('/crypto/config', cryptoPerm, crypto.config);
+router.put('/crypto/config', cryptoPerm, validate(cryptoConfigRules), crypto.updateConfig);
+router.get('/crypto/universe', cryptoPerm, crypto.universe);
+router.get('/crypto/market', cryptoPerm, validate(marketRules), crypto.market);
+router.get('/crypto/candles', cryptoPerm, validate(marketRules), crypto.candles);
+router.get('/crypto/stats', cryptoPerm, crypto.stats);
+router.get('/crypto/signals', cryptoPerm, crypto.list);
+router.post('/crypto/signals', cryptoPerm, validate(createSignalRules), crypto.create);
+router.post('/crypto/signals/:id/cancel', cryptoPerm, validate(signalIdRules), crypto.cancel);
+router.post('/crypto/track', cryptoPerm, crypto.trackNow);
 
 const chatPerm = requirePermission(P.CHAT_RESPOND);
 router.get('/chat/conversations', chatPerm, validate(conversationListRules), chat.list);

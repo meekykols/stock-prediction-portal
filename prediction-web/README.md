@@ -283,6 +283,31 @@ NBA 1.4). Tuning the football decay and shrinkage moved accuracy by under 1 poin
 **Next gains need more data:** bookmaker odds as a model input (paid API-Sports plans), and the contest's crowd
 picks once a few months have been collected (the admin CSV export has the model pick next to each customer pick).
 
+## Crypto signals (phase 1)
+
+Futures signals for **Binance and Bybit USDT perpetuals** (`/app/crypto-signals`, Admin → Crypto signals).
+
+- **Staff signals:** staff with `crypto.signals` post a signal with exchange, coin, timeframe (15m day trade, 1h/4h
+  swing), long/short, market or limit entry, stop-loss, up to three take-profits and a note. The form shows the
+  live price, a chart with the levels drawn on it, and the reward:risk. The server checks the levels against the
+  live price and rounds them to the contract's tick size.
+- **Live tracking:** every minute the scheduler replays closed 1-minute candles through each open signal
+  (`utils/signalMath.js`): limit fills, take-profits, stop-loss, and the time limit. Each take-profit closes an equal
+  share, and the stop moves to entry after TP1 (switchable). If a candle touches both the stop and a target, the
+  stop counts first. Fees (0.05% per side by default) are deducted. Results are in R (multiples of the risk), and
+  staff can cancel a pending signal or close a trade at the market.
+- **Who sees what:** in settings, a plan × kind matrix (staff / swing / day). Plans without access see locked
+  cards; finished signals are public as the track record (30 days, win rate, average and total R, per staff member).
+- **Settings:** on/off, pause with a reason (blocks new signals; open trades are still tracked), swing and day
+  switches, Binance/Bybit switches, the coins watched (top N by futures volume and/or a fixed list, both switchable),
+  limit expiry, maximum hold, the fee, and the break-even rule.
+- **Telegram:** set `TELEGRAM_BOT_TOKEN`. Customers press "Connect Telegram", open the bot and press Start (a one-time
+  code links the chat). They get new signals and every update for the kinds their plan includes, and alerts stop
+  when the plan lapses. `/stop` or "Disconnect" unlinks; blocked chats are unlinked automatically.
+
+Next phases: a backtester and strategy research (automatic swing and day signals), paid on-chain and liquidation
+data (CoinGlass, CryptoQuant), paper trading, then launch of the strategies that pass.
+
 ## Roadmap
 
 All six planned phases are done, plus daily tips, booking codes and the picks contest. Next: better models

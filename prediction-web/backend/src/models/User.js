@@ -21,6 +21,12 @@ const userSchema = new mongoose.Schema(
     status: { type: String, enum: ['active', 'suspended'], default: 'active' },
     emailVerified: { type: Boolean, default: false },
     lastLoginAt: Date,
+    // Linked Telegram chat for signal alerts (set by the bot after /start <code>).
+    telegram: {
+      chatId: { type: String, index: true },
+      username: String,
+      linkedAt: Date,
+    },
     preferences: {
       theme: { type: String, enum: ['dark', 'light', 'system'], default: 'system' },
       language: { type: String, default: 'en' },
