@@ -59,3 +59,20 @@ export const settingsApi = {
     return unwrap(api.post(`/site-config/images/${field}`, form));
   },
 };
+
+export const chatApi = {
+  list: (params) => unwrap(api.get('/chat/conversations', { params: clean(params) })),
+  get: (id) => unwrap(api.get(`/chat/conversations/${id}`)),
+  send: (id, body) => unwrap(api.post(`/chat/conversations/${id}/messages`, { body })),
+  read: (id) => api.post(`/chat/conversations/${id}/read`),
+  assign: (id) => unwrap(api.post(`/chat/conversations/${id}/assign`)),
+  close: (id) => unwrap(api.post(`/chat/conversations/${id}/close`)),
+};
+
+export const signalsApi = {
+  list: (params) => unwrap(api.get('/signals', { params: clean(params) })),
+  config: () => unwrap(api.get('/signals/config')),
+  saveConfig: (body) => api.put('/signals/config', body).then((r) => r.data),
+  runs: () => unwrap(api.get('/signals/runs')),
+  run: (job) => api.post('/signals/run', { job }).then((r) => r.data),
+};

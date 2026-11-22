@@ -3,12 +3,14 @@ import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import {
-  CandlestickChart, CreditCard, Globe, History, LayoutDashboard, LogOut, Menu, Settings, Trophy,
+  CandlestickChart, CreditCard, Globe, History, LayoutDashboard, LogOut, Menu, Radio, Settings, Trophy,
 } from 'lucide-react';
 import Logo from '../ui/Logo';
 import ThemeToggle from '../ui/ThemeToggle';
 import PageLoader from '../ui/PageLoader';
 import AnnouncementBar from './AnnouncementBar';
+import ChatWidget from '../chat/ChatWidget';
+import RealtimeBridge from '../../realtime/RealtimeBridge';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
 import { useSiteConfig } from '../../hooks/useSiteConfig';
@@ -19,6 +21,7 @@ const NAV = [
   { to: '/app', key: 'overview', icon: LayoutDashboard, end: true },
   { to: '/app/stocks', key: 'stocks', icon: CandlestickChart },
   { to: '/app/sports', key: 'sports', icon: Trophy },
+  { to: '/app/signals', key: 'signals', icon: Radio },
   { to: '/app/history', key: 'history', icon: History },
   { to: '/app/billing', key: 'billing', icon: CreditCard },
   { to: '/app/settings', key: 'settings', icon: Settings },
@@ -44,6 +47,8 @@ export default function AppLayout() {
 
   return (
     <div className="drawer lg:drawer-open">
+      <RealtimeBridge />
+      <ChatWidget />
       <input id="app-drawer" type="checkbox" className="drawer-toggle" />
 
       <div className="drawer-content flex min-h-screen flex-col">

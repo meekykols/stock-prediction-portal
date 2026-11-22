@@ -7,6 +7,7 @@ export const api = axios.create({ baseURL, withCredentials: true, timeout: 30000
 // The access token lives only in memory; the refresh token is an httpOnly cookie.
 let accessToken = null;
 export const setAccessToken = (token) => { accessToken = token; };
+export const getAccessToken = () => accessToken;
 
 let handlers = { onRefreshed: () => {}, onExpired: () => {} };
 export const setSessionHandlers = (h) => { handlers = { ...handlers, ...h }; };

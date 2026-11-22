@@ -129,6 +129,31 @@ Subscriptions, Payments, Plans (create/edit/archive, limits), Predictions, Messa
   access immediately. Refunds are issued from the Paystack dashboard.
 - MRR counts auto-renewing Paystack subscriptions only, normalised to one month.
 
+## Live chat and signals (Phase 6)
+
+**Live chat.** Customers on plans with `limits.liveChat` (Pro, Elite) get a chat widget in the dashboard;
+others see an upgrade prompt. Staff with the `chat.respond` permission answer from **Support chat** in the
+admin console, with an unread badge, assignment, close/reopen and typing indicators.
+Messages go through the REST API (`/api/v1/chat`, `/api/admin/chat/...`) for auth, validation and rate
+limits; Socket.IO pushes them live. Socket rooms: `user:<id>`, `staff:chat` (chat staff) and `premium`.
+
+**Signals.** Scheduled model runs published to a feed that Pro/Elite customers can open (free users see
+titles with the outlook removed server-side). Signals don't count toward daily prediction quotas.
+
+| Job | Schedule (UTC) | What it does |
+| --- | --- | --- |
+| stock-signals | 21:30 Mon–Fri | Runs the LSTM on the admin watchlist |
+| sports-signals | 06:00 daily | Analyses today's upcoming fixtures (needs `API_FOOTBALL_KEY`) |
+| expire / abandon | every 15 min / hourly | Lapses subscriptions, closes stale checkouts |
+
+Manage the watchlist, run jobs manually and see run history under **Signals** in the admin console.
+Premium customers get a live notification when new signals are published.
+Run the scheduler on one instance only: set `RUN_SCHEDULER=false` on the others.
+
+In production, if the API is on a different domain from the apps, set `VITE_SOCKET_URL` to the API origin
+in `frontend/.env` and `admin/.env`, and allow WebSocket upgrades at your proxy for `/socket.io`.
+
 ## Roadmap
 
-6. Live chat (Socket.IO) and scheduled prediction runs
+All six planned phases are done. Possible next steps: email notifications (receipts, chat replies),
+retraining the stock model for direction accuracy, a trained sports model, and deployment.

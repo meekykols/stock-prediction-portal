@@ -8,6 +8,10 @@ import * as dashboard from '../../controllers/admin/dashboard.controller.js';
 import * as billing from '../../controllers/admin/billing.controller.js';
 import * as predictions from '../../controllers/admin/prediction.controller.js';
 import * as account from '../../controllers/admin/account.controller.js';
+import * as chat from '../../controllers/admin/chat.controller.js';
+import * as signals from '../../controllers/admin/signal.controller.js';
+import { conversationListRules, messageRules, runJobRules, signalConfigRules } from '../../validators/chat.validator.js';
+import { chatLimiter } from '../../middlewares/rateLimit.js';
 import { changePasswordRules } from '../../validators/auth.validator.js';
 import { requirePermission, requireStaff, requireSuperadmin } from '../../middlewares/auth.js';
 import { validate } from '../../middlewares/validate.js';
@@ -58,6 +62,20 @@ router.get('/payments', requirePermission(P.SUBSCRIPTIONS_VIEW), billing.payment
 
 router.get('/predictions', requirePermission(P.PREDICTIONS_MANAGE), predictions.list);
 router.get('/predictions/:id', requirePermission(P.PREDICTIONS_MANAGE), id, predictions.show);
+router.get('/signals', requirePermission(P.PREDICTIONS_MANAGE), signals.list);
+router.get('/signals/config', requirePermission(P.PREDICTIONS_MANAGE), signals.config);
+router.put('/signals/config', requirePermission(P.PREDICTIONS_MANAGE), validate(signalConfigRules), signals.updateConfig);
+router.get('/signals/runs', requirePermission(P.PREDICTIONS_MANAGE), signals.runs);
+router.post('/signals/run', requirePermission(P.PREDICTIONS_MANAGE), validate(runJobRules), signals.runNow);
+
+const chatPerm = requirePermission(P.CHAT_RESPOND);
+router.get('/chat/conversations', chatPerm, validate(conversationListRules), chat.list);
+router.get('/chat/conversations/:id', chatPerm, id, chat.show);
+router.post('/chat/conversations/:id/messages', chatPerm, chatLimiter, id, validate(messageRules), chat.send);
+router.post('/chat/conversations/:id/read', chatPerm, id, chat.read);
+router.post('/chat/conversations/:id/assign', chatPerm, id, chat.assign);
+router.post('/chat/conversations/:id/close', chatPerm, id, chat.close);
+
 router.post('/staff', requireSuperadmin, validate(createStaffRules), users.createStaff);
 
 router.get('/messages', requirePermission(P.MESSAGES_VIEW), messages.list);

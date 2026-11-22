@@ -7,6 +7,7 @@ export const api = axios.create({ baseURL, withCredentials: true, timeout: 30000
 
 let accessToken = null;
 export const setAccessToken = (t) => { accessToken = t; };
+export const getAccessToken = () => accessToken;
 
 let handlers = { onRefreshed: () => {}, onExpired: () => {} };
 export const setSessionHandlers = (h) => { handlers = { ...handlers, ...h }; };

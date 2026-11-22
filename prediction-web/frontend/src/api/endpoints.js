@@ -37,3 +37,14 @@ export const billingApi = {
   resume: () => api.post('/billing/resume').then((r) => r.data),
   manageCard: () => unwrap(api.get('/billing/manage-card')),
 };
+
+export const chatApi = {
+  thread: () => unwrap(api.get('/chat')),
+  send: (body) => unwrap(api.post('/chat/messages', { body })),
+  read: () => api.post('/chat/read'),
+};
+
+export const signalsApi = {
+  list: (params) => unwrap(api.get('/signals', { params })),
+  get: (id) => unwrap(api.get(`/signals/${id}`)),
+};

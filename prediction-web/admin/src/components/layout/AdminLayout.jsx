@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { ExternalLink, LogOut, Menu, Moon, Sun, UserCog } from 'lucide-react';
 import Logo from '../ui/Logo';
 import PageLoader from '../ui/PageLoader';
@@ -9,6 +9,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
 import { logout } from '../../store/authSlice';
 import { initials } from '../../utils/format';
+import RealtimeBridge from '../../realtime/RealtimeBridge';
 
 const SITE_URL = import.meta.env.VITE_SITE_URL || 'http://localhost:5173';
 
@@ -17,6 +18,7 @@ export default function AdminLayout() {
   const theme = useTheme();
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const badges = { chat: useSelector((s) => s.chat.unreadTotal) };
 
   const nav = NAV_SECTIONS.map((section) => ({
     section,
@@ -28,6 +30,7 @@ export default function AdminLayout() {
 
   return (
     <div className="drawer lg:drawer-open">
+      <RealtimeBridge />
       <input id="admin-drawer" type="checkbox" className="drawer-toggle" />
       <div className="drawer-content flex min-h-screen flex-col">
         <header className="sticky top-0 z-30 border-b border-base-content/10 bg-base-100/80 backdrop-blur-xl">
@@ -65,10 +68,11 @@ export default function AdminLayout() {
               <div key={g.section} className="mb-3">
                 <p className="px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wider text-base-content/40">{g.section}</p>
                 <ul className="menu w-full gap-0.5 p-0">
-                  {g.items.map(({ path, label, icon: Icon }) => (
+                  {g.items.map(({ path, label, icon: Icon, badge }) => (
                     <li key={path}>
                       <NavLink to={path} end={path === '/'} onClick={close} className={({ isActive }) => `rounded-field py-2 ${isActive ? 'bg-primary/15 font-medium text-primary' : 'text-base-content/75'}`}>
                         <Icon className="size-4" /> {label}
+                        {badge && badges[badge] > 0 && <span className="badge badge-primary badge-xs ml-auto">{badges[badge]}</span>}
                       </NavLink>
                     </li>
                   ))}

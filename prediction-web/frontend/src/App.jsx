@@ -25,6 +25,8 @@ const Settings = lazy(() => import('./pages/app/Settings'));
 const History = lazy(() => import('./pages/app/History'));
 const PredictionDetail = lazy(() => import('./pages/app/PredictionDetail'));
 const BillingCallback = lazy(() => import('./pages/app/BillingCallback'));
+const Signals = lazy(() => import('./pages/app/Signals'));
+const SignalDetail = lazy(() => import('./pages/app/SignalDetail'));
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -64,6 +66,8 @@ export default function App() {
               <Route index element={<Overview />} />
               <Route path="stocks" element={<StockPredictions />} />
               <Route path="sports" element={<SportsPredictions />} />
+              <Route path="signals" element={<Signals />} />
+              <Route path="signals/:id" element={<SignalDetail />} />
               <Route path="history" element={<History />} />
               <Route path="predictions/:id" element={<PredictionDetail />} />
               <Route path="billing" element={<Billing />} />

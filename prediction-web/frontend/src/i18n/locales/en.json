@@ -16,7 +16,8 @@
     "settings": "Settings",
     "logout": "Sign out",
     "viewSite": "View website",
-    "history": "History"
+    "history": "History",
+    "signals": "Signals"
   },
   "footer": {
     "product": "Product",
