@@ -15,3 +15,13 @@ export const updateUserRules = [
   body('permissions').optional().isArray(),
   body('permissions.*').isIn(ALL_PERMISSIONS),
 ];
+
+export const grantPlanRules = [
+  body('planId').isMongoId().withMessage('Choose a plan'),
+  body('days').isInt({ min: 1, max: 730 }).withMessage('Days must be 1 to 730').toInt(),
+  body('note').optional({ values: 'falsy' }).trim().isLength({ max: 300 }),
+];
+
+export const cancelSubscriptionRules = [
+  body('immediate').optional().isBoolean().toBoolean(),
+];

@@ -300,6 +300,9 @@ async function resolveProviderSubscription(sub) {
 async function requirePaidLiveSubscription(userId) {
   const sub = await getLiveSubscription(userId);
   if (!sub || sub.plan.price === 0) throw ApiError.badRequest('You do not have a paid subscription');
+  if (sub.source === 'admin') {
+    throw ApiError.badRequest('This plan was added by our team and has no billing to manage.');
+  }
   return sub;
 }
 
@@ -336,7 +339,7 @@ export async function cardManagementLink(userId) {
 
 export async function billingSummary(userId) {
   const sub = await getLiveSubscription(userId);
-  const paid = sub && sub.plan.price > 0;
+  const paid = sub && (sub.plan.price > 0 || sub.source === 'admin');
   return {
     paymentsEnabled: paystackEnabled(),
     subscription: paid
@@ -347,6 +350,7 @@ export async function billingSummary(userId) {
         startsAt: sub.startsAt,
         endsAt: sub.endsAt,
         autoRenew: sub.status === ACTIVE,
+        source: sub.source,
         cancelledAt: sub.cancelledAt,
         paymentIssue: Boolean(sub.paymentIssueAt),
       }
@@ -368,4 +372,59 @@ export async function abandonStalePayments() {
     { status: PAYMENT_STATUS.ABANDONED },
   );
   return res.modifiedCount;
+}
+
+// ---------------------------------------------------------------- staff actions
+
+/**
+ * Staff cancel. Paystack subscriptions are disabled at Paystack first.
+ * `immediate` ends access now (refunds, if any, are issued in the Paystack dashboard);
+ * otherwise access runs to the end of the paid period.
+ */
+export async function adminCancelSubscription(subscriptionId, { immediate }) {
+  const sub = await Subscription.findById(subscriptionId).populate('plan');
+  if (!sub) throw ApiError.notFound('Subscription not found');
+  if (![ACTIVE, NON_RENEWING].includes(sub.status)) throw ApiError.badRequest('This subscription is not active');
+
+  if (sub.source === 'paystack' && sub.status === ACTIVE) {
+    await resolveProviderSubscription(sub);
+    await paystack.disableSubscription({ code: sub.paystack.subscriptionCode, token: sub.paystack.emailToken });
+  }
+  sub.cancelledAt = new Date();
+  sub.cancelReason = 'admin';
+  if (immediate || sub.source === 'admin') {
+    sub.status = CANCELLED;
+    sub.endsAt = new Date();
+  } else {
+    sub.status = NON_RENEWING;
+  }
+  await sub.save();
+  return sub;
+}
+
+/** Complimentary access chosen by staff: no payment, no renewal. */
+export async function grantPlan({ userId, planId, days, note, grantedBy }) {
+  const [user, plan] = await Promise.all([User.findById(userId), Plan.findById(planId)]);
+  if (!user || user.role !== 'customer') throw ApiError.notFound('Customer not found');
+  if (!plan || plan.price === 0) throw ApiError.badRequest('Choose a paid plan to grant');
+
+  const live = await getLiveSubscription(user._id);
+  if (live && live.source === 'paystack') {
+    throw ApiError.conflict('This customer has a paid subscription. Cancel it before granting a plan.');
+  }
+  const now = new Date();
+  const sub = await Subscription.create({
+    user: user._id,
+    plan: plan._id,
+    status: NON_RENEWING,
+    source: 'admin',
+    amount: 0,
+    currency: plan.currency,
+    startsAt: now,
+    endsAt: new Date(now.getTime() + days * 24 * 60 * 60 * 1000),
+    grantedBy,
+    note,
+  });
+  await retireOtherSubscriptions(user._id, sub._id);
+  return sub.populate('plan');
 }

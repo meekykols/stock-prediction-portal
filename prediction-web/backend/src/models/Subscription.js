@@ -24,6 +24,9 @@ const subscriptionSchema = new mongoose.Schema(
     endsAt: { type: Date, index: true },
     cancelledAt: Date,
     cancelReason: { type: String, enum: ['user', 'replaced', 'provider', 'admin'] },
+    source: { type: String, enum: ['paystack', 'admin'], default: 'paystack', index: true },
+    grantedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    note: { type: String, trim: true, maxlength: 300 },
     paymentIssueAt: Date, // last failed renewal; cleared on the next successful charge
     paystack: {
       reference: String, // first payment

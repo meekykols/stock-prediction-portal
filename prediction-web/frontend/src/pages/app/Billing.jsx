@@ -54,7 +54,12 @@ function CurrentPlanCard({ summary, plan, onChanged }) {
           </div>
         </div>
         <div className="text-sm sm:text-right">
-          {sub ? (
+          {sub?.source === 'admin' ? (
+            <>
+              <span className="badge badge-soft badge-secondary">Complimentary</span>
+              <p className="mt-1 flex items-center gap-1.5 text-base-content/70 sm:justify-end"><CalendarClock className="size-4" /> Access until {formatDate(sub.endsAt)}</p>
+            </>
+          ) : sub ? (
             <>
               <span className={`badge badge-soft ${sub.autoRenew ? 'badge-success' : 'badge-warning'}`}>{sub.autoRenew ? 'Auto-renew on' : 'Auto-renew off'}</span>
               <p className="mt-1 flex items-center gap-1.5 text-base-content/70 sm:justify-end">
@@ -76,7 +81,7 @@ function CurrentPlanCard({ summary, plan, onChanged }) {
         </div>
       )}
 
-      {sub && (
+      {sub && sub.source !== 'admin' && (
         <div className="mt-5 flex flex-wrap gap-2 border-t border-base-content/10 pt-5">
           <button type="button" className="btn btn-sm btn-ghost border-base-content/10" onClick={() => act('card')} disabled={busy}>
             {busy === 'card' ? <span className="loading loading-spinner loading-xs" /> : <CreditCard className="size-4" />} Update card
@@ -147,7 +152,7 @@ export default function Billing() {
   };
 
   const paymentsEnabled = summary?.paymentsEnabled;
-  const hasPaid = Boolean(summary?.subscription);
+  const hasPaid = Boolean(summary?.subscription) && summary.subscription.source !== 'admin';
 
   const actionFor = (plan) => {
     const isCurrent = currentPlan?.id === plan.id;
@@ -155,7 +160,7 @@ export default function Billing() {
     if (plan.price === 0) {
       return (
         <p className="text-center text-xs text-base-content/60">
-          {hasPaid ? 'Cancel auto-renew above to move here when your period ends.' : 'Included for everyone.'}
+          {hasPaid ? 'Cancel auto-renew above to move here when your period ends.' : summary?.subscription ? 'You return here when your complimentary plan ends.' : 'Included for everyone.'}
         </p>
       );
     }

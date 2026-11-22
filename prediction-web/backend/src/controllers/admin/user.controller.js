@@ -1,6 +1,6 @@
-import { User } from '../../models/index.js';
+import { Payment, Prediction, Subscription, User } from '../../models/index.js';
 import { revokeAllSessions } from '../../services/auth.service.js';
-import { getCurrentEntitlement } from '../../services/subscription.service.js';
+import { getCurrentEntitlement, liveSubscriptionFilter } from '../../services/subscription.service.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { ApiError } from '../../utils/ApiError.js';
 import { ROLES } from '../../utils/permissions.js';
@@ -16,24 +16,54 @@ export const list = asyncHandler(async (req, res) => {
     const rx = new RegExp(escapeRegex(String(req.query.q)), 'i');
     filter.$or = [{ email: rx }, { firstName: rx }, { lastName: rx }];
   }
-  const [items, total] = await Promise.all([
+  const [users, total] = await Promise.all([
     User.find(filter).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit),
     User.countDocuments(filter),
   ]);
-  res.json({ success: true, data: { items, total, page, pages: Math.ceil(total / limit) } });
+  const live = await Subscription.find({ user: { $in: users.map((u) => u._id) }, ...liveSubscriptionFilter() })
+    .populate('plan', 'name slug');
+  const planOf = Object.fromEntries(live.map((s) => [String(s.user), { name: s.plan?.name, slug: s.plan?.slug, source: s.source, status: s.status }]));
+  const items = users.map((u) => ({ ...u.toJSON(), plan: planOf[String(u._id)] ?? null }));
+  res.json({ success: true, data: { items, total, page, pages: Math.max(1, Math.ceil(total / limit)) } });
 });
 
 export const show = asyncHandler(async (req, res) => {
   const user = await User.findById(req.params.id);
   if (!user) throw ApiError.notFound('User not found');
-  const entitlement = await getCurrentEntitlement(user._id);
-  res.json({ success: true, data: { user, subscription: entitlement } });
+  const [entitlement, subscriptions, payments, predictionCounts, lastPrediction] = await Promise.all([
+    getCurrentEntitlement(user._id),
+    Subscription.find({ user: user._id, status: { $ne: 'pending' } }).sort({ createdAt: -1 }).limit(20).populate('plan', 'name slug interval price'),
+    Payment.find({ user: user._id }).sort({ createdAt: -1 }).limit(20).populate('plan', 'name slug'),
+    Prediction.aggregate([{ $match: { user: user._id } }, { $group: { _id: '$type', count: { $sum: 1 } } }]),
+    Prediction.findOne({ user: user._id }).sort({ createdAt: -1 }).select('createdAt type'),
+  ]);
+  res.json({
+    success: true,
+    data: {
+      user,
+      entitlement: {
+        status: entitlement.status,
+        endsAt: entitlement.endsAt,
+        plan: entitlement.plan,
+        subscriptionId: entitlement.subscription?.id ?? null,
+        source: entitlement.subscription?.source ?? null,
+      },
+      subscriptions,
+      payments,
+      predictions: {
+        counts: Object.fromEntries(predictionCounts.map((p) => [p._id, p.count])),
+        lastAt: lastPrediction?.createdAt ?? null,
+      },
+    },
+  });
 });
 
 export const update = asyncHandler(async (req, res) => {
   const user = await User.findById(req.params.id);
   if (!user) throw ApiError.notFound('User not found');
-  if (user.role === ROLES.SUPERADMIN && req.user.role !== ROLES.SUPERADMIN) throw ApiError.forbidden();
+  if (user.role !== ROLES.CUSTOMER && req.user.role !== ROLES.SUPERADMIN) {
+    throw ApiError.forbidden('Only a superadmin can change staff accounts');
+  }
   if (String(user._id) === String(req.user._id) && req.body.status === 'suspended') {
     throw ApiError.badRequest('You cannot suspend your own account');
   }

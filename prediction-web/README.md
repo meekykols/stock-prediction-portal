@@ -6,7 +6,7 @@ Subscription platform for AI stock and sports predictions.
 | --- | --- | --- |
 | `backend/` | Express + MongoDB (Mongoose) API, Socket.IO, scheduler | Phase 1 ✅ |
 | `frontend/` | Customer site + dashboard (React, Tailwind v4, daisyUI 5, Redux Toolkit) | Phase 2 ✅ |
-| `admin/` | Staff console | Phase 5 |
+| `admin/` | Staff console (React, Tailwind v4, daisyUI 5, Redux Toolkit), permission-based | Phase 5 ✅ |
 | `django-backend/` | Stateless ML microservice (stock LSTM, sports Poisson model), called only by Express | Phase 3 ✅ |
 
 ## Run locally
@@ -31,6 +31,11 @@ npm run dev
 
 # 2. Frontend → http://localhost:5173 (proxies /api to :5050)
 cd ../frontend
+npm install
+npm run dev
+
+# 3. Admin console → http://localhost:5174 (sign in with the create-admin account)
+cd ../admin
 npm install
 npm run dev
 ```
@@ -108,7 +113,22 @@ auto-renew, access continues to the period end), `POST /billing/resume`, `GET /b
 run `npm run paystack:sync` to create the Paystack plans up front. For local webhook testing, expose the
 API with a tunnel (e.g. ngrok) and use that URL. `npm test` runs the billing unit tests.
 
+## Admin console (Phase 5)
+
+Pages: Dashboard (MRR, 30-day revenue and sign-ups, active plans, predictions today, service health),
+Customers and customer detail (suspend, grant a complimentary plan, cancel subscriptions, payments),
+Subscriptions, Payments, Plans (create/edit/archive, limits), Predictions, Messages, Staff and Site settings.
+
+- `admin/src/routers/routes.jsx` is the single list that drives routes, the sidebar and permission checks.
+  Staff only see sections their permissions allow; the API enforces the same permissions.
+- Superadmins (created with `npm run create-admin`) manage staff accounts and permissions. Other staff
+  cannot change staff accounts, including their own permissions.
+- **Grant plan** gives a customer a paid plan free for N days (no renewal, no charge). Customers with an
+  active Paystack subscription must be cancelled first.
+- **Cancel subscription**: *At period end* turns off renewal at Paystack; *End access now* also removes
+  access immediately. Refunds are issued from the Paystack dashboard.
+- MRR counts auto-renewing Paystack subscriptions only, normalised to one month.
+
 ## Roadmap
 
-5. Admin console
 6. Live chat (Socket.IO) and scheduled prediction runs
