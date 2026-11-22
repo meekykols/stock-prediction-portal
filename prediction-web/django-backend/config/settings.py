@@ -69,7 +69,18 @@ STOCK_MAX_HORIZON = 30
 
 API_FOOTBALL_KEY = config("API_FOOTBALL_KEY", default="")
 API_FOOTBALL_BASE_URL = "https://v3.football.api-sports.io"
+# Optional: route every sport through a proxy or test server as <base>/<sport>/...
+API_SPORTS_BASE_URL = config("API_SPORTS_BASE_URL", default="")
 SPORTS_LEAGUES = [int(x) for x in config("SPORTS_LEAGUES", default="39,140,135,78,61,2,3", cast=Csv())]
+# Competitions tipped when the caller doesn't send its own list (the admin console normally does).
+# MMA has no leagues: every fight on the day is tipped.
+SPORTS_DEFAULT_LEAGUES = {
+    "football": [39, 140, 135, 78, 61, 2, 3, 848, 88, 94, 40, 399],  # top 5, UEFA cups, NED, POR, Championship, NPFL
+    "basketball": [12, 120],  # NBA, EuroLeague
+    "american-football": [1, 2],  # NFL, NCAA
+    "volleyball": [97, 113],  # SuperLega (Italy), PlusLiga (Poland)
+    "mma": [],
+}
 
 LOGGING = {
     "version": 1,

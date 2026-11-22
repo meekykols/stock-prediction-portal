@@ -43,10 +43,12 @@ export function formatPrice(value, currency, reference = value, locale = 'en-US'
   }
 }
 
-/** Compact axis labels: 3.5K, 61K, 1.0970, 0.0551 */
+/** Axis labels: 125K, 61,240, 1,385, 342.5, 1.097, 0.0551 */
 export function axisNumber(v, reference) {
   const ref = Math.abs(Number(reference) || Math.abs(v));
-  if (ref >= 1000) return new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(v);
+  // Compact only for big numbers; "1.4K" would hide moves in a USD/NGN or gold chart.
+  if (ref >= 100000) return new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(v);
+  if (ref >= 1000) return new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(v);
   // parseFloat trims trailing zeros: 0.035 rather than 0.035000
   return String(parseFloat(Number(v).toFixed(Math.max(0, priceDigits(ref) - (ref >= 100 ? 2 : 0)))));
 }

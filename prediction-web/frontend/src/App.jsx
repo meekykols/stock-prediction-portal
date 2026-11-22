@@ -12,6 +12,10 @@ import { bootstrapSession } from './store/authSlice';
 import { fetchSiteConfig } from './store/siteConfigSlice';
 
 const Pricing = lazy(() => import('./pages/public/Pricing'));
+const Tips = lazy(() => import('./pages/public/Tips'));
+const AppTips = lazy(() => import('./pages/app/Tips'));
+const BookingCodes = lazy(() => import('./pages/app/BookingCodes'));
+const Contest = lazy(() => import('./pages/app/Contest'));
 const About = lazy(() => import('./pages/public/About'));
 const Contact = lazy(() => import('./pages/public/Contact'));
 const NotFound = lazy(() => import('./pages/public/NotFound'));
@@ -50,6 +54,7 @@ export default function App() {
         <Routes>
           <Route element={<PublicLayout />}>
             <Route index element={<Home />} />
+            <Route path="tips" element={<Tips />} />
             <Route path="pricing" element={<Pricing />} />
             <Route path="about" element={<About />} />
             <Route path="contact" element={<Contact />} />
@@ -66,6 +71,9 @@ export default function App() {
               <Route index element={<Overview />} />
               <Route path="markets" element={<MarketPredictions />} />
               <Route path="stocks" element={<Navigate to="/app/markets" replace />} />
+              <Route path="tips" element={<AppTips />} />
+              <Route path="codes" element={<BookingCodes />} />
+              <Route path="contest" element={<Contest />} />
               <Route path="sports" element={<SportsPredictions />} />
               <Route path="signals" element={<Signals />} />
               <Route path="signals/:id" element={<SignalDetail />} />

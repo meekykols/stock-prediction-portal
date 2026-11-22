@@ -165,7 +165,112 @@ Run the scheduler on one instance only: set `RUN_SCHEDULER=false` on the others.
 In production, if the API is on a different domain from the apps, set `VITE_SOCKET_URL` to the API origin
 in `frontend/.env` and `admin/.env`, and allow WebSocket upgrades at your proxy for `/socket.io`.
 
+## Daily sports tips
+
+A public tips page (`/tips`, also `/app/tips` in the dashboard) lists model picks for **football, basketball,
+American football, volleyball and MMA**, grouped by league, for yesterday, today and tomorrow. Every tip is
+settled against the final result, and the page shows the 30-day hit rate.
+
+| Sport | Model (Django, `sports/services/ratings/`) | Tip | Extra markets |
+| --- | --- | --- | --- |
+| Football | Dixon–Coles attack/defence ratings | 1 / X / 2 + score | Over/under 2.5, both teams to score |
+| Basketball, American football | Offence/defence points ratings | Winner + score | Over/under the league's typical total |
+| Volleyball | Per-set team ratings (best of five) | Winner + set score | Over/under 3.5 sets |
+| MMA | Fighter Elo | Winner | — |
+
+Every model is fitted per competition on this season and last (recent games weighted more). Walk-forward
+backtest on the 2024 seasons (each game predicted only from earlier results):
+
+| | Tips correct | High-confidence tips correct |
+| --- | --- | --- |
+| Premier League / La Liga | 52% / 51% | 68% / 73% |
+| NBA | 65% | 83% |
+| NFL | 64% | 67% |
+| SuperLega volleyball | 76% | 82% |
+| UFC | 60% | — |
+
+| Job | Schedule (UTC) | What it does |
+| --- | --- | --- |
+| sports-tips | 05:00 and 15:00 | Tips for today and tomorrow; refreshes unstarted tips, never changes started ones |
+| tips-settle | hourly at :20 | Settles finished events: won / lost / void (postponed, ties on winner tips) |
+
+**Admin console → Sports tips:** turn sports on or off, pick leagues (search by name), choose which plans see
+every tip (the others, guests included, get a free preview per sport per day; finished matches are always
+visible), set what counts as a "Top tip", run either job, see the hit rate, and correct a result by hand.
+Staff need the `tips.manage` permission.
+
+**Data plan.** One API-Sports key (`API_FOOTBALL_KEY`) works for all five sports, but each sport is a separate
+subscription. Free plans only return yesterday–tomorrow and seasons up to 2024, so they can't rate teams for
+the current season: generation then reports `plan_restricted` per league in the run log. A paid plan is needed
+for each sport you switch on.
+
+## Booking codes
+
+Staff with the `codes.manage` permission post bookmaker booking codes from **Admin console → Booking codes**:
+platform, code, total odds, a note, and the selections. Selections are picked from upcoming tips (1X2, winner,
+double chance, over/under, both teams to score) or typed in by hand. A code expires at its first kick-off
+(or a time staff set when no selection has one) and can't be changed after that, apart from the note and odds.
+
+- **Customers** (`/app/codes`): live codes with one-tap copy and a link to the bookmaker, plus a Results tab
+  for the last 14 days. Plans switched off in settings see a locked card (odds and number of selections only);
+  codes unlock for everyone once the first match starts, so the track record is public.
+- **Settlement:** selections linked to tips settle from the tip's final score in the hourly `tips-settle` job,
+  using accumulator rules (one lost selection loses the code; void selections drop out). Hand-typed selections
+  are marked by staff, and staff can override any code's result.
+- **Settings:** the betting platform list (name, website, colour, on/off), which plans see live codes, and
+  an on/off switch for the feature. The page also shows the hit rate and copy counts by platform and by staff.
+
+## Picks contest
+
+Customers enter **one slip a day** at `/app/contest`, picking the result (1/X/2 in football, winner elsewhere)
+for matches on that day's tips list.
+
+- **Slip size:** between the minimum and maximum set in the console (default 10–20). On quiet days the
+  minimum drops to the number of matches on the day's list. Only matches that haven't started can be picked,
+  and a slip is final once entered.
+- **Scoring:** 1 point per correct pick; a slip with no wrong picks has its points multiplied (default ×2).
+  Postponed matches and ties are void: they don't score and don't spoil a perfect slip. Slips settle in the
+  hourly `tips-settle` job.
+- **Leaderboard:** monthly (UTC). Ties go to more perfect slips, then more correct picks, then whoever got
+  there first. Customers see first name and surname initial only.
+- **Who can enter:** paid plans always; a console switch decides for free (Starter) users.
+- **Rewards (Admin console → Picks contest):** once a month ends, staff with `contest.manage` give any player
+  a **cash prize** (recorded, paid by transfer, then marked paid), a **free Elite plan** (granted immediately),
+  or an **advert spot**. An advert starts as a draft; staff add an image, text, link and dates, then approve it.
+  Live adverts show on the home, tips and contest pages, labelled "Sponsored", and come down at their end date.
+- **Training data:** the console exports picks as CSV (one row per pick, with the model's pick and the result).
+  Customers appear only as a stable pseudonymous code.
+
+## Model quality (step 4)
+
+**Markets: likely ranges.** A walk-forward test (2020–2025, 23 instruments, each year predicted from earlier
+years only) found no model that calls next-day or next-week direction better than "always guess the usual
+direction": stocks 52.5% vs 52.8%, forex 50.1% vs 50.9%, commodities 52.0% vs 52.5%, crypto 52.0% vs 51.4%.
+Move *size* is predictable, so every market prediction now includes 50/80/95% likely ranges for each forecast
+day (`markets/services/ranges.py`: RiskMetrics volatility plus the instrument's own fat-tailed history).
+The 80% range held 78–80% of the time across asset classes. Each result shows that instrument's own 3-year
+record and warns when it's below 70% (e.g. USD/NGN, 49%, because of devaluations). The direction hit rate is
+shown next to how often the price simply rose, and the page flags when the LSTM target falls outside the range.
+
+**Sports: calibration and backtests.** `python manage.py backtest_sports --data DIR [--fetch sport:league:season,...]`
+runs the walk-forward test and prints accuracy, log loss, a calibration table and results by confidence label;
+`--fit-calibration` suggests the per-sport calibration powers in `sports/services/ratings/__init__.py`.
+On the 2024 seasons the raw models were already close to honest (football calibration error 2.1 points,
+NBA 1.4). Tuning the football decay and shrinkage moved accuracy by under 1 point, which is within noise.
+"Top tip" (high confidence) results after calibration:
+
+| | Matches | All tips | Top tips |
+| --- | --- | --- | --- |
+| Football (EPL, La Liga, Serie A, Bundesliga, Ligue 1) | 1,756 | 51.7% | 69.2% |
+| NBA | 1,377 | 65.2% | 82.2% |
+| NFL | 318 | 64.2% | 76.0% |
+| SuperLega volleyball | 178 | 75.8% | 82.1% |
+| UFC | 513 | 59.5% | none: MMA showed no edge by confidence, so it's rarely rated above low |
+
+**Next gains need more data:** bookmaker odds as a model input (paid API-Sports plans), and the contest's crowd
+picks once a few months have been collected (the admin CSV export has the model pick next to each customer pick).
+
 ## Roadmap
 
-All six planned phases are done. Possible next steps: email notifications (receipts, chat replies),
-retraining the market model for direction accuracy (ideally per asset class), a trained sports model, and deployment.
+All six planned phases are done, plus daily tips, booking codes and the picks contest. Next: better models
+(bookmaker odds as an input, retraining from settled tips and contest picks).

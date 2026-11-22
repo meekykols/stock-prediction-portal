@@ -7,6 +7,7 @@ import SectionHeading from '../../components/ui/SectionHeading';
 import ForecastVisual from '../../components/ui/ForecastVisual';
 import PricingGrid from '../../components/ui/PricingGrid';
 import Faq from '../../components/ui/Faq';
+import PromoBanner from '../../components/contest/PromoBanner';
 import { useSiteConfig } from '../../hooks/useSiteConfig';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useAuth } from '../../hooks/useAuth';
@@ -120,6 +121,7 @@ export default function Home() {
     <>
       <Hero />
       <CoverageMarquee />
+      <PromoBanner className="container-x mt-12" />
 
       <section className="container-x py-24" id="features">
         <SectionHeading

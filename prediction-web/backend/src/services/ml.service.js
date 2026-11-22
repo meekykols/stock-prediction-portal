@@ -43,4 +43,7 @@ export const mlService = {
   predictMarket: ({ assetClass, symbol, horizon }) => call('post', '/v1/markets/predict/', { assetClass, symbol, horizon }),
   sportsFixtures: (date) => call('get', '/v1/sports/fixtures/', date ? { date } : {}),
   predictSports: ({ fixtureId }) => call('post', '/v1/sports/predict/', { fixtureId }),
+  sportsTips: ({ sport, date, leagues }) => call('post', '/v1/sports/tips/', { sport, date, leagues }),
+  sportsEvents: ({ sport, date }) => call('get', '/v1/sports/events/', { sport, date }),
+  sportsLeagues: (sport) => call('get', '/v1/sports/leagues/', { sport }),
 };

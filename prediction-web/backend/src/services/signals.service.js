@@ -1,11 +1,11 @@
-import { JobRun, Signal, SignalConfig } from '../models/index.js';
+import { Signal, SignalConfig } from '../models/index.js';
+import { isRunning as jobIsRunning, runJob } from '../utils/jobRunner.js';
 import { ApiError } from '../utils/ApiError.js';
 import { mlService } from './ml.service.js';
 import { getCurrentEntitlement } from './subscription.service.js';
 import { emitTo, ROOMS } from '../socket/index.js';
 
 const todayUtc = () => new Date().toISOString().slice(0, 10);
-const running = new Set(); // one run per job per process
 
 // ---------------------------------------------------------------- shaping
 
@@ -33,6 +33,9 @@ function marketSignal(r, runDate) {
       horizonDays: r.outlook.horizonDays,
       directionalAccuracy: r.metrics.directionalAccuracy,
       r2: r.metrics.r2,
+      upDaysRate: r.metrics.upDaysRate,
+      range80: r.ranges?.final?.p80,
+      rangeCoverage: r.ranges?.trackRecord?.coverage,
     },
     result: r,
   };
@@ -75,26 +78,9 @@ async function save(signal) {
 
 // ---------------------------------------------------------------- runs
 
-async function runJob(job, { trigger = 'schedule', triggeredBy } = {}, work) {
-  if (running.has(job)) throw ApiError.conflict('That job is already running');
-  running.add(job);
-  const run = await JobRun.create({ job, trigger, triggeredBy });
-  try {
-    const outcome = await work(run);
-    run.status = outcome.skipped ? 'skipped' : run.failed && !run.created ? 'failed' : run.failed ? 'partial' : 'success';
-    run.note = outcome.note;
-  } catch (err) {
-    run.status = 'failed';
-    run.errors.push(err.message);
-  } finally {
-    run.finishedAt = new Date();
-    await run.save();
-    running.delete(job);
-  }
+const announce = (job) => (run) => {
   if (run.created) emitTo(ROOMS.premium, 'signals:new', { job, count: run.created, runDate: todayUtc() });
-  console.log(`[signals] ${job} ${run.status}: ${run.created} created, ${run.failed} failed`);
-  return run;
-}
+};
 
 const isWeekend = (d = new Date()) => [0, 6].includes(d.getUTCDay());
 
@@ -123,7 +109,7 @@ export async function runMarketSignals(opts = {}) {
       }
     }
     return weekend && opts.trigger !== 'manual' ? { note: 'Weekend run: crypto only' } : {};
-  });
+  }, { onFinish: announce('market-signals') });
 }
 
 const UPCOMING = new Set(['NS', 'TBD']);
@@ -153,10 +139,10 @@ export async function runSportsSignals(opts) {
       }
     }
     return {};
-  });
+  }, { onFinish: announce('sports-signals') });
 }
 
-export const isRunning = (job) => running.has(job);
+export const isRunning = jobIsRunning;
 
 // ---------------------------------------------------------------- feed
 

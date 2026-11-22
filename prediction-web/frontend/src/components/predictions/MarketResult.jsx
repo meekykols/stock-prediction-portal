@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import {
   Area, CartesianGrid, ComposedChart, Legend, Line, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts';
-import { ArrowDownRight, ArrowUpRight, Brain, Info, Minus } from 'lucide-react';
+import { ArrowDownRight, ArrowUpRight, Brain, Info, Minus, TriangleAlert } from 'lucide-react';
 import { C, axisProps, downsample, tooltipStyle } from './chartTheme';
 import { useSiteConfig } from '../../hooks/useSiteConfig';
 import { assetLabel, axisNumber, formatDate, formatPct, formatPrice } from '../../utils/format';
@@ -30,18 +30,24 @@ function Metric({ label, value, hint, tone }) {
   );
 }
 
-function directionHint(acc) {
+// Judged against the simplest baseline: how often the price just went up.
+function directionHint(acc, upRate) {
   if (acc === null || acc === undefined) return { tone: '', hint: 'Not enough data' };
-  if (acc < 0.53) return { tone: 'text-warning', hint: 'Close to a coin flip for next-day direction' };
-  if (acc < 0.6) return { tone: '', hint: 'Slightly better than chance' };
-  return { tone: 'text-success', hint: 'Calls daily direction well' };
+  const base = upRate ? Math.max(upRate, 1 - upRate) : 0.5;
+  const vs = upRate ? ` Price rose on ${Math.round(upRate * 100)}% of those days.` : '';
+  if (acc < base + 0.02) return { tone: 'text-warning', hint: `No better than always guessing the usual direction.${vs}` };
+  if (acc < base + 0.06) return { tone: '', hint: `Slightly better than the simple baseline.${vs}` };
+  return { tone: 'text-success', hint: `Clearly beats the simple baseline.${vs}` };
 }
 
 export default function MarketResult({ result }) {
   const { legal } = useSiteConfig();
   const [tab, setTab] = useState('price');
   const [range, setRange] = useState('1Y');
-  const { currency, outlook, metrics, model } = result;
+  const { currency, outlook, metrics, model, ranges } = result;
+  const range80 = ranges?.final?.p80;
+  const coverage = ranges?.trackRecord?.coverage;
+  const unreliable = coverage != null && coverage < 0.7;
   const name = result.displayName || result.ticker;
   const money = (v) => formatPrice(v, currency, result.lastClose);
   const tick = (v) => axisNumber(v, result.lastClose);
@@ -68,13 +74,18 @@ export default function MarketResult({ result }) {
     const { dates, close } = result.history;
     const tail = dates.slice(-60).map((d, i) => ({ date: d, close: close[close.length - 60 + i] }));
     // Bridge: the forecast line starts at the last real close.
-    tail[tail.length - 1] = { ...tail[tail.length - 1], forecast: tail[tail.length - 1].close };
-    return [...tail, ...result.forecast.map((f) => ({ date: f.date, forecast: f.price }))];
-  }, [result.history, result.forecast]);
+    const last = tail[tail.length - 1].close;
+    tail[tail.length - 1] = { ...tail[tail.length - 1], forecast: last, ...(ranges && { band80: [last, last], band50: [last, last] }) };
+    const byDate = new Map((ranges?.days || []).map((d) => [d.date, d]));
+    return [...tail, ...result.forecast.map((f) => {
+      const r = byDate.get(f.date);
+      return { date: f.date, forecast: f.price, ...(r && { band80: r.p80, band50: r.p50 }) };
+    })];
+  }, [result.history, result.forecast, ranges]);
 
   const DirIcon = outlook.direction === 'up' ? ArrowUpRight : outlook.direction === 'down' ? ArrowDownRight : Minus;
   const dirTone = outlook.direction === 'up' ? 'text-success' : outlook.direction === 'down' ? 'text-error' : 'text-base-content/60';
-  const dir = directionHint(metrics.directionalAccuracy);
+  const dir = directionHint(metrics.directionalAccuracy, metrics.upDaysRate);
 
   return (
     <div className="space-y-6">
@@ -103,6 +114,21 @@ export default function MarketResult({ result }) {
             <span className="font-display text-3xl font-bold">{money(outlook.targetPrice)}</span>
           </div>
           <p className={`relative mt-1 text-sm font-medium ${dirTone}`}>{formatPct(outlook.changePct, 2)} vs last close</p>
+          {range80 && (
+            <div className="relative mt-4 border-t border-base-content/10 pt-3">
+              <p className="text-xs text-base-content/60">80% likely range on {formatDate(ranges.final.date)}</p>
+              <p className="font-mono text-lg font-semibold">{money(range80[0])} – {money(range80[1])}</p>
+              {coverage != null && (
+                <p className={`text-xs ${unreliable ? 'text-warning' : 'text-base-content/50'}`}>
+                  {unreliable && <TriangleAlert className="mr-1 inline size-3.5" />}
+                  Held {Math.round(coverage * 100)}% of the time over the last {ranges.trackRecord.years} years{unreliable ? ': less reliable here (sudden jumps)' : ''}
+                </p>
+              )}
+              {(outlook.targetPrice < range80[0] || outlook.targetPrice > range80[1]) && (
+                <p className="mt-1 text-xs text-warning"><TriangleAlert className="mr-1 inline size-3.5" />The model&apos;s target is outside this range: a bigger move than recent volatility suggests. Treat it with caution.</p>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -165,11 +191,13 @@ export default function MarketResult({ result }) {
                 <CartesianGrid stroke={C.grid} vertical={false} />
                 <XAxis dataKey="date" {...axisProps} minTickGap={32} />
                 <YAxis {...axisProps} width={72} domain={['auto', 'auto']} tickFormatter={tick} />
-                <Tooltip {...tooltipStyle} formatter={(v) => money(v)} />
+                <Tooltip {...tooltipStyle} formatter={(v) => (Array.isArray(v) ? `${money(v[0])} – ${money(v[1])}` : money(v))} />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
                 <ReferenceLine x={result.lastDate} stroke={C.axis} strokeDasharray="3 3" label={{ value: 'Last close', fill: C.axis, fontSize: 11, position: 'insideTopLeft' }} />
+                {ranges && <Area type="monotone" dataKey="band80" name="80% range" stroke="none" fill={C.secondary} fillOpacity={0.12} isAnimationActive={false} />}
+                {ranges && <Area type="monotone" dataKey="band50" name="50% range" stroke="none" fill={C.secondary} fillOpacity={0.22} isAnimationActive={false} />}
                 <Line type="monotone" dataKey="close" name="Close" stroke={C.primary} strokeWidth={2} dot={false} isAnimationActive={false} connectNulls={false} />
-                <Line type="monotone" dataKey="forecast" name="Forecast" stroke={C.secondary} strokeWidth={2.5} strokeDasharray="6 4" dot={{ r: 3 }} isAnimationActive={false} />
+                <Line type="monotone" dataKey="forecast" name="LSTM path" stroke={C.secondary} strokeWidth={2.5} strokeDasharray="6 4" dot={{ r: 3 }} isAnimationActive={false} />
               </ComposedChart>
             )}
           </ResponsiveContainer>
@@ -178,15 +206,19 @@ export default function MarketResult({ result }) {
         {tab === 'forecast' && (
           <div className="mt-6 overflow-x-auto">
             <table className="table table-sm">
-              <thead><tr><th>Date</th><th className="text-right">Forecast</th><th className="text-right">vs last close</th></tr></thead>
+              <thead><tr><th>Date</th><th className="text-right">80% likely range</th><th className="text-right">LSTM path</th><th className="text-right">vs last close</th></tr></thead>
               <tbody>
-                {result.forecast.map((f) => (
-                  <tr key={f.date}>
-                    <td>{formatDate(f.date)}</td>
-                    <td className="text-right font-mono">{money(f.price)}</td>
-                    <td className="text-right font-mono">{formatPct((f.price / result.lastClose - 1) * 100, 2)}</td>
-                  </tr>
-                ))}
+                {result.forecast.map((f, i) => {
+                  const r = ranges?.days?.[i]?.p80;
+                  return (
+                    <tr key={f.date}>
+                      <td>{formatDate(f.date)}</td>
+                      <td className="text-right font-mono">{r ? `${money(r[0])} – ${money(r[1])}` : '—'}</td>
+                      <td className="text-right font-mono">{money(f.price)}</td>
+                      <td className="text-right font-mono">{formatPct((f.price / result.lastClose - 1) * 100, 2)}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -205,6 +237,7 @@ export default function MarketResult({ result }) {
             <p className="font-semibold">{model.name}</p>
             <p className="mt-1 font-mono text-xs text-base-content/60">{model.architecture}</p>
             <p className="mt-2 text-base-content/70">Trained on {model.trainedOn}. {model.notes}</p>
+            {ranges?.method && <p className="mt-2 text-base-content/70"><span className="font-medium text-base-content">{ranges.method.name}:</span> {ranges.method.description}</p>}
           </div>
         </div>
         <div className="glass-card flex gap-4 p-5">

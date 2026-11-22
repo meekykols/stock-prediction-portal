@@ -68,6 +68,9 @@ function marketSummary(r) {
     horizonDays: r.outlook.horizonDays,
     r2: r.metrics.r2,
     directionalAccuracy: r.metrics.directionalAccuracy,
+    upDaysRate: r.metrics.upDaysRate,
+    range80: r.ranges?.final?.p80,
+    rangeCoverage: r.ranges?.trackRecord?.coverage,
   };
 }
 

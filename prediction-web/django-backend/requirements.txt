@@ -6,6 +6,7 @@ jax>=0.6            # Keras backend (CPU). Swap for tensorflow if you prefer.
 numpy>=2.0
 pandas>=2.2
 scikit-learn>=1.6
+scipy>=1.14
 yfinance>=0.2.60
 requests>=2.32
 gunicorn>=23.0

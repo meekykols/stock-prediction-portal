@@ -49,3 +49,22 @@ export const signalsApi = {
   list: (params) => unwrap(api.get('/signals', { params })),
   get: (id) => unwrap(api.get(`/signals/${id}`)),
 };
+
+export const tipsApi = {
+  list: (params) => unwrap(api.get('/tips', { params })),
+  record: () => unwrap(api.get('/tips/record')),
+};
+
+export const codesApi = {
+  list: (params) => unwrap(api.get('/codes', { params })),
+  copy: (id) => unwrap(api.post(`/codes/${id}/copy`)),
+};
+
+export const contestApi = {
+  state: () => unwrap(api.get('/contest')),
+  submit: (picks) => api.post('/contest/slips', { picks }).then((r) => r.data),
+  slips: (params) => unwrap(api.get('/contest/slips', { params })),
+  leaderboard: (params) => unwrap(api.get('/contest/leaderboard', { params })),
+  winners: () => unwrap(api.get('/contest/winners')),
+  promos: () => unwrap(api.get('/promos')),
+};
