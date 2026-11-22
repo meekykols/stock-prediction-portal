@@ -1,0 +1,144 @@
+@import "tailwindcss";
+
+@plugin "daisyui" {
+  themes: false;
+}
+
+/* Dark-first futuristic theme */
+@plugin "daisyui/theme" {
+  name: "nebula";
+  default: true;
+  prefersdark: true;
+  color-scheme: dark;
+  --color-base-100: oklch(16% 0.03 265);
+  --color-base-200: oklch(20% 0.035 265);
+  --color-base-300: oklch(26% 0.04 265);
+  --color-base-content: oklch(93% 0.02 255);
+  --color-primary: oklch(80% 0.15 200);
+  --color-primary-content: oklch(18% 0.04 230);
+  --color-secondary: oklch(66% 0.24 300);
+  --color-secondary-content: oklch(98% 0.01 300);
+  --color-accent: oklch(84% 0.18 155);
+  --color-accent-content: oklch(20% 0.05 155);
+  --color-neutral: oklch(30% 0.04 265);
+  --color-neutral-content: oklch(92% 0.02 255);
+  --color-info: oklch(74% 0.15 235);
+  --color-info-content: oklch(18% 0.04 235);
+  --color-success: oklch(78% 0.17 155);
+  --color-success-content: oklch(20% 0.05 155);
+  --color-warning: oklch(83% 0.16 80);
+  --color-warning-content: oklch(22% 0.05 80);
+  --color-error: oklch(68% 0.21 20);
+  --color-error-content: oklch(98% 0.01 20);
+  --radius-selector: 0.75rem;
+  --radius-field: 0.75rem;
+  --radius-box: 1.25rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
+
+/* Light companion theme */
+@plugin "daisyui/theme" {
+  name: "aurora";
+  default: false;
+  prefersdark: false;
+  color-scheme: light;
+  --color-base-100: oklch(99% 0.005 250);
+  --color-base-200: oklch(96.5% 0.01 250);
+  --color-base-300: oklch(92% 0.015 250);
+  --color-base-content: oklch(24% 0.04 265);
+  --color-primary: oklch(55% 0.16 225);
+  --color-primary-content: oklch(98% 0.01 225);
+  --color-secondary: oklch(54% 0.24 300);
+  --color-secondary-content: oklch(98% 0.01 300);
+  --color-accent: oklch(62% 0.16 160);
+  --color-accent-content: oklch(98% 0.01 160);
+  --color-neutral: oklch(28% 0.04 265);
+  --color-neutral-content: oklch(96% 0.01 255);
+  --color-info: oklch(58% 0.15 235);
+  --color-info-content: oklch(98% 0.01 235);
+  --color-success: oklch(60% 0.16 155);
+  --color-success-content: oklch(98% 0.01 155);
+  --color-warning: oklch(72% 0.16 70);
+  --color-warning-content: oklch(22% 0.05 70);
+  --color-error: oklch(58% 0.22 25);
+  --color-error-content: oklch(98% 0.01 25);
+  --radius-selector: 0.75rem;
+  --radius-field: 0.75rem;
+  --radius-box: 1.25rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", "Inter", ui-sans-serif, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  --animate-marquee: marquee 40s linear infinite;
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-draw: draw 2.4s ease-out forwards;
+
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+  @keyframes draw {
+    to { stroke-dashoffset: 0; }
+  }
+}
+
+@layer base {
+  html { scroll-behavior: smooth; }
+  body {
+    @apply bg-base-100 text-base-content font-sans antialiased;
+  }
+  h1, h2, h3, h4 { @apply font-display tracking-tight; }
+}
+
+@layer components {
+  /* Frosted glass surface */
+  .glass-card {
+    @apply rounded-box border border-base-content/10 bg-base-200/60 backdrop-blur-xl;
+  }
+  .glass-card-hover {
+    @apply transition duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-[0_0_40px_-12px] hover:shadow-primary/40;
+  }
+  .text-gradient {
+    @apply bg-gradient-to-r from-primary via-info to-secondary bg-clip-text text-transparent;
+  }
+  .bg-grid {
+    background-image:
+      linear-gradient(to right, color-mix(in oklch, var(--color-base-content) 6%, transparent) 1px, transparent 1px),
+      linear-gradient(to bottom, color-mix(in oklch, var(--color-base-content) 6%, transparent) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 40%, transparent 100%);
+  }
+  .glow-orb {
+    @apply pointer-events-none absolute rounded-full blur-3xl;
+  }
+  .eyebrow {
+    @apply inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium uppercase tracking-widest text-primary;
+  }
+  .container-x {
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
