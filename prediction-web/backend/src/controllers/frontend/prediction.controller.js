@@ -11,8 +11,17 @@ export const usage = asyncHandler(async (req, res) => {
   res.json({ success: true, data: await predictions.getUsage(req.user._id, plan) });
 });
 
-export const createStock = asyncHandler(async (req, res) => {
-  respond(res, await predictions.createStockPrediction(req.user._id, { ticker: req.body.ticker, horizon: req.body.horizon ?? 7 }));
+export const createMarket = asyncHandler(async (req, res) => {
+  const { assetClass, symbol, horizon = 7 } = req.body;
+  respond(res, await predictions.createMarketPrediction(req.user._id, { assetClass, symbol, horizon }));
+});
+
+let catalogCache = { data: null, at: 0 };
+export const marketCatalog = asyncHandler(async (_req, res) => {
+  if (!catalogCache.data || Date.now() - catalogCache.at > 60 * 60 * 1000) {
+    catalogCache = { data: await mlService.marketCatalog(), at: Date.now() };
+  }
+  res.json({ success: true, data: catalogCache.data });
 });
 
 export const createSports = asyncHandler(async (req, res) => {

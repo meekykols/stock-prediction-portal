@@ -4,7 +4,7 @@ import { useSiteConfig } from '../../hooks/useSiteConfig';
 import { useTheme } from '../../hooks/useTheme';
 
 const POINTS = [
-  'Deep-learning stock forecasts with accuracy metrics',
+  'Forecasts for stocks, forex, commodities and crypto',
   'Football predictions from form and team statistics',
   'Start free, upgrade any time',
 ];

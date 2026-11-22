@@ -11,19 +11,19 @@ import Modal from '../components/ui/Modal';
 import { predictionsApi } from '../api/endpoints';
 import { usePagedQuery } from '../hooks/usePagedQuery';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
-import { formatDateTime } from '../utils/format';
+import { ASSET_LABEL, formatDateTime, formatPrice } from '../utils/format';
 
 const pct = (v) => (v === null || v === undefined ? '—' : `${Math.round(v * 100)}%`);
 
 function Summary({ p }) {
   const s = p.summary || {};
-  if (p.type === 'stock') {
+  if (p.type === 'market') {
     return (
       <div className="flex items-center gap-3">
         <CandlestickChart className="size-4 shrink-0 text-primary" />
         <div>
-          <p className="font-mono font-semibold">{s.ticker} <span className="font-sans text-xs font-normal text-base-content/50">{s.horizonDays}-day</span></p>
-          <p className={`text-xs ${s.direction === 'up' ? 'text-success' : 'text-error'}`}>{s.changePct > 0 ? '+' : ''}{s.changePct?.toFixed?.(2)}% → {s.targetPrice?.toFixed?.(2)} {s.currency}</p>
+          <p className="font-mono font-semibold">{s.displayName || s.ticker} <span className="font-sans text-xs font-normal text-base-content/50">{ASSET_LABEL[s.assetClass]} · {s.horizonDays}-day</span></p>
+          <p className={`text-xs ${s.direction === 'up' ? 'text-success' : 'text-error'}`}>{s.changePct > 0 ? '+' : ''}{s.changePct?.toFixed?.(2)}% → {formatPrice(s.targetPrice, s.lastClose)} {s.unit || s.currency}</p>
         </div>
       </div>
     );
@@ -52,9 +52,9 @@ function Detail({ id, onClose }) {
   const r = p?.result;
   return (
     <Modal open={Boolean(id)} onClose={onClose} title="Prediction details" size="max-w-xl">
-      {!p ? <div className="skeleton h-40" /> : p.type === 'stock' ? (
+      {!p ? <div className="skeleton h-40" /> : p.type === 'market' ? (
         <dl className="grid grid-cols-2 gap-3 text-sm">
-          {[['Ticker', r.ticker], ['Last close', `${r.lastClose} ${r.currency || ''}`], ['Target', `${r.outlook.targetPrice} (${r.outlook.changePct}%)`], ['Horizon', `${r.outlook.horizonDays} days`],
+          {[['Instrument', `${r.displayName || r.ticker} (${ASSET_LABEL[r.assetClass] || 'Stock'})`], ['Last close', `${formatPrice(r.lastClose)} ${r.unit || r.currency || ''}`], ['Target', `${formatPrice(r.outlook.targetPrice, r.lastClose)} (${r.outlook.changePct}%)`], ['Horizon', `${r.outlook.horizonDays} days`],
             ['R²', r.metrics.r2], ['MAPE', `${r.metrics.mape}%`], ['Direction hit rate', pct(r.metrics.directionalAccuracy)], ['Model', r.model.name]].map(([k, v]) => (
             <div key={k} className="rounded-field bg-base-100/50 p-3"><dt className="text-xs text-base-content/50">{k}</dt><dd className="font-mono">{v}</dd></div>
           ))}
@@ -86,8 +86,8 @@ export default function Predictions() {
     <>
       <PageHeader title="Predictions" subtitle="Every forecast customers have run." />
       <div className="mb-4 flex flex-col gap-2 sm:flex-row">
-        <SearchInput value={query.q || ''} onChange={(q) => setQuery({ q })} placeholder="Ticker, team or customer" />
-        <Select value={query.type} onChange={(type) => setQuery({ type })} label="Type" options={[{ value: '', label: 'All types' }, { value: 'stock', label: 'Stocks' }, { value: 'sports', label: 'Sports' }]} />
+        <SearchInput value={query.q || ''} onChange={(q) => setQuery({ q })} placeholder="Symbol, team or customer" />
+        <Select value={query.type} onChange={(type) => setQuery({ type })} label="Type" options={[{ value: '', label: 'All types' }, { value: 'market', label: 'Markets' }, { value: 'sports', label: 'Sports' }]} />
       </div>
       <DataTable columns={columns} rows={data?.items} loading={loading} error={error} onRowClick={(p) => setOpenId(p.id)}
         empty={<EmptyState icon={Sparkles} title="No predictions yet" />} />

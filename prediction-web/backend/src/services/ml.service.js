@@ -38,7 +38,9 @@ async function call(method, url, payload) {
 }
 
 export const mlService = {
-  predictStock: ({ ticker, horizon }) => call('post', '/v1/stocks/predict/', { ticker, horizon }),
+  marketCatalog: () => call('get', '/v1/markets/catalog/'),
+  resolveMarket: ({ assetClass, symbol }) => call('get', '/v1/markets/resolve/', { assetClass, symbol }),
+  predictMarket: ({ assetClass, symbol, horizon }) => call('post', '/v1/markets/predict/', { assetClass, symbol, horizon }),
   sportsFixtures: (date) => call('get', '/v1/sports/fixtures/', date ? { date } : {}),
   predictSports: ({ fixtureId }) => call('post', '/v1/sports/predict/', { fixtureId }),
 };

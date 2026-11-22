@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, SearchX } from 'lucide-react';
 import EmptyState from '../../components/ui/EmptyState';
-import StockResult from '../../components/predictions/StockResult';
+import MarketResult from '../../components/predictions/MarketResult';
 import SportsResult from '../../components/predictions/SportsResult';
 import { predictionsApi } from '../../api/endpoints';
 import { errorMessage } from '../../api/client';
@@ -21,9 +21,9 @@ export default function PredictionDetail() {
   }, [id]);
 
   const p = state.prediction;
-  const title = p ? (p.type === 'stock' ? `${p.summary.ticker} forecast` : `${p.summary.home} vs ${p.summary.away}`) : 'Prediction';
+  const title = p ? (p.type === 'market' ? `${p.summary.displayName || p.summary.ticker} forecast` : `${p.summary.home} vs ${p.summary.away}`) : 'Prediction';
   useDocumentTitle(title);
-  const back = p?.type === 'sports' ? '/app/sports' : p?.type === 'stock' ? '/app/stocks' : '/app/history';
+  const back = p?.type === 'sports' ? '/app/sports' : p?.type === 'market' ? `/app/markets?class=${p.summary.assetClass || 'stock'}` : '/app/history';
 
   return (
     <>
@@ -37,7 +37,7 @@ export default function PredictionDetail() {
       {state.status === 'error' && (
         <EmptyState icon={SearchX} title="Prediction unavailable" action={<Link to="/app/history" className="btn btn-primary btn-sm">View history</Link>}>{state.message}</EmptyState>
       )}
-      {state.status === 'ready' && (p.type === 'stock' ? <StockResult result={p.result} /> : <SportsResult result={p.result} />)}
+      {state.status === 'ready' && (p.type === 'market' ? <MarketResult result={p.result} /> : <SportsResult result={p.result} />)}
     </>
   );
 }

@@ -15,12 +15,12 @@ const PLANS = [
     tagline: 'Explore the platform',
     price: 0,
     features: [
-      '3 stock predictions per day',
+      '3 market predictions per day (stocks, forex, commodities, crypto)',
       '3 sports predictions per day',
-      'Daily market overview',
+      'Signals feed preview',
       'Community support',
     ],
-    limits: { stockPredictionsPerDay: 3, sportsPredictionsPerDay: 3, premiumSignals: false, liveChat: false, apiAccess: false },
+    limits: { marketPredictionsPerDay: 3, sportsPredictionsPerDay: 3, premiumSignals: false, liveChat: false, apiAccess: false },
     sortOrder: 0,
   },
   {
@@ -29,13 +29,13 @@ const PLANS = [
     tagline: 'For active traders and punters',
     price: 500000,
     features: [
-      '50 stock predictions per day',
+      '50 market predictions per day (stocks, forex, commodities, crypto)',
       '50 sports predictions per day',
       'Premium signals feed',
       'Model accuracy reports',
       'Live chat support',
     ],
-    limits: { stockPredictionsPerDay: 50, sportsPredictionsPerDay: 50, premiumSignals: true, liveChat: true, apiAccess: false },
+    limits: { marketPredictionsPerDay: 50, sportsPredictionsPerDay: 50, premiumSignals: true, liveChat: true, apiAccess: false },
     highlighted: true,
     sortOrder: 1,
   },
@@ -45,13 +45,13 @@ const PLANS = [
     tagline: 'Unlimited, with API access',
     price: 1500000,
     features: [
-      'Unlimited stock predictions',
+      'Unlimited market predictions (stocks, forex, commodities, crypto)',
       'Unlimited sports predictions',
       'Premium signals feed',
       'Priority live chat',
       'API access',
     ],
-    limits: { stockPredictionsPerDay: -1, sportsPredictionsPerDay: -1, premiumSignals: true, liveChat: true, apiAccess: true },
+    limits: { marketPredictionsPerDay: -1, sportsPredictionsPerDay: -1, premiumSignals: true, liveChat: true, apiAccess: true },
     sortOrder: 2,
   },
 ];
@@ -69,9 +69,9 @@ async function run() {
     await SiteConfig.create({
       key: 'main',
       siteName: 'Prediction Web',
-      tagline: 'AI-powered market and sports predictions',
+      tagline: 'AI predictions for stocks, forex, commodities, crypto and football',
       description:
-        'Machine-learning forecasts for stocks and sports, delivered in a clean dashboard with transparent accuracy metrics.',
+        'Machine-learning forecasts for stocks, forex, commodities, crypto and football, with transparent accuracy metrics.',
       contact: {
         email: 'hello@example.com',
         supportEmail: 'support@example.com',
@@ -80,9 +80,9 @@ async function run() {
         supportHours: 'Mon–Fri, 9am–6pm WAT',
       },
       seo: {
-        title: 'Prediction Web — AI stock and sports predictions',
-        description: 'Machine-learning forecasts for stocks and sports.',
-        keywords: ['stock prediction', 'sports prediction', 'AI', 'LSTM'],
+        title: 'Prediction Web: AI market and sports predictions',
+        description: 'Machine-learning forecasts for stocks, forex, commodities, crypto and football.',
+        keywords: ['stock prediction', 'forex prediction', 'crypto prediction', 'commodity prediction', 'sports prediction', 'AI'],
       },
       legal: { companyName: 'Prediction Web Ltd' },
     });

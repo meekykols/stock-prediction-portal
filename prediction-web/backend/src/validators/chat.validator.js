@@ -8,11 +8,14 @@ export const conversationListRules = [query('status').optional().isIn(['open', '
 
 export const signalConfigRules = [
   body('enabled').optional().isBoolean().toBoolean(),
-  body('stocks.enabled').optional().isBoolean().toBoolean(),
-  body('stocks.tickers').optional().isArray({ max: 50 }).withMessage('Up to 50 tickers'),
-  body('stocks.tickers.*').isString().trim().toUpperCase().matches(/^[A-Z0-9][A-Z0-9.\-=^]{0,14}$/).withMessage('Invalid ticker'),
-  body('stocks.horizon').optional().isInt({ min: 1, max: 30 }).toInt(),
+  body('markets.enabled').optional().isBoolean().toBoolean(),
+  body('markets.watchlist').optional().isObject(),
+  ...['stock', 'forex', 'commodity', 'crypto'].flatMap((c) => [
+    body(`markets.watchlist.${c}`).optional().isArray({ max: 30 }).withMessage('Up to 30 symbols per market'),
+    body(`markets.watchlist.${c}.*`).isString().trim().isLength({ min: 1, max: 30 }),
+  ]),
+  body('markets.horizon').optional().isInt({ min: 1, max: 30 }).toInt(),
   body('sports.enabled').optional().isBoolean().toBoolean(),
   body('sports.maxPerRun').optional().isInt({ min: 1, max: 30 }).toInt(),
 ];
-export const runJobRules = [body('job').isIn(['stock-signals', 'sports-signals']).withMessage('Unknown job')];
+export const runJobRules = [body('job').isIn(['market-signals', 'sports-signals']).withMessage('Unknown job')];

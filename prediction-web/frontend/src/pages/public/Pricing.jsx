@@ -7,7 +7,7 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { formatLimit } from '../../utils/format';
 
 const ROWS = [
-  { label: 'Stock predictions / day', get: (p) => formatLimit(p.limits?.stockPredictionsPerDay) },
+  { label: 'Market predictions / day', get: (p) => formatLimit(p.limits?.marketPredictionsPerDay) },
   { label: 'Sports predictions / day', get: (p) => formatLimit(p.limits?.sportsPredictionsPerDay) },
   { label: 'Premium signals feed', get: (p) => p.limits?.premiumSignals },
   { label: 'Live chat support', get: (p) => p.limits?.liveChat },

@@ -9,16 +9,22 @@ const running = new Set(); // one run per job per process
 
 // ---------------------------------------------------------------- shaping
 
-function stockSignal(r, runDate) {
+const CLASS_LABEL = { stock: 'Stock', forex: 'Forex', commodity: 'Commodity', crypto: 'Crypto' };
+
+function marketSignal(r, runDate) {
   return {
-    type: 'stock',
-    key: r.ticker,
+    type: 'market',
+    assetClass: r.assetClass,
+    key: r.symbol,
     runDate,
-    title: r.ticker,
-    subtitle: `${r.outlook.horizonDays}-day outlook`,
+    title: r.displayName,
+    subtitle: `${CLASS_LABEL[r.assetClass]} · ${r.outlook.horizonDays}-day outlook`,
     strength: Math.abs(r.outlook.changePct),
     summary: {
-      ticker: r.ticker,
+      assetClass: r.assetClass,
+      symbol: r.symbol,
+      displayName: r.displayName,
+      unit: r.unit,
       currency: r.currency,
       lastClose: r.lastClose,
       targetPrice: r.outlook.targetPrice,
@@ -90,22 +96,33 @@ async function runJob(job, { trigger = 'schedule', triggeredBy } = {}, work) {
   return run;
 }
 
-export async function runStockSignals(opts) {
-  return runJob('stock-signals', opts, async (run) => {
+const isWeekend = (d = new Date()) => [0, 6].includes(d.getUTCDay());
+
+/**
+ * Weekdays: every market on the watchlist. Weekends: crypto only (other markets are closed,
+ * so their data hasn't changed).
+ */
+export async function runMarketSignals(opts = {}) {
+  return runJob('market-signals', opts, async (run) => {
     const config = await SignalConfig.getSingleton();
-    if (!config.enabled || !config.stocks.enabled) return { skipped: true, note: 'Stock signals are turned off' };
+    if (!config.enabled || !config.markets.enabled) return { skipped: true, note: 'Market signals are turned off' };
+    const weekend = isWeekend();
+    const classes = weekend && opts.trigger !== 'manual' ? ['crypto'] : ['stock', 'forex', 'commodity', 'crypto'];
     const runDate = todayUtc();
-    for (const ticker of config.stocks.tickers) {
-      try {
-        const result = await mlService.predictStock({ ticker, horizon: config.stocks.horizon });
-        await save(stockSignal(result, runDate));
-        run.created += 1;
-      } catch (err) {
-        run.failed += 1;
-        run.errors.push(`${ticker}: ${err.message}`);
+    const { watchlist, horizon } = config.markets;
+    for (const assetClass of classes) {
+      for (const symbol of watchlist[assetClass] || []) {
+        try {
+          const result = await mlService.predictMarket({ assetClass, symbol, horizon });
+          await save(marketSignal(result, runDate));
+          run.created += 1;
+        } catch (err) {
+          run.failed += 1;
+          run.errors.push(`${symbol}: ${err.message}`);
+        }
       }
     }
-    return {};
+    return weekend && opts.trigger !== 'manual' ? { note: 'Weekend run: crypto only' } : {};
   });
 }
 
@@ -149,6 +166,7 @@ function lock(signal) {
   const json = signal.toJSON();
   const summary = { ...json.summary };
   for (const f of LOCKED_FIELDS) delete summary[f];
+  delete summary.lastClose; // keeps the instrument visible, not the numbers
   return { ...json, summary, strength: undefined, locked: true };
 }
 

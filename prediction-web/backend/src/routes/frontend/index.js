@@ -17,7 +17,7 @@ import {
 } from '../../validators/auth.validator.js';
 import { contactRules } from '../../validators/contact.validator.js';
 import {
-  fixturesRules, listPredictionRules, predictionIdRules, sportsPredictionRules, stockPredictionRules,
+  fixturesRules, listPredictionRules, marketPredictionRules, predictionIdRules, sportsPredictionRules,
 } from '../../validators/prediction.validator.js';
 
 const router = Router();
@@ -44,7 +44,8 @@ router.get('/account/subscriptions', requireAuth, account.subscriptionHistory);
 router.get('/predictions/usage', requireAuth, predictions.usage);
 router.get('/predictions', requireAuth, validate(listPredictionRules), predictions.list);
 router.get('/predictions/:id', requireAuth, validate(predictionIdRules), predictions.show);
-router.post('/predictions/stocks', requireAuth, predictionLimiter, validate(stockPredictionRules), predictions.createStock);
+router.post('/predictions/markets', requireAuth, predictionLimiter, validate(marketPredictionRules), predictions.createMarket);
+router.get('/markets/catalog', requireAuth, predictions.marketCatalog);
 router.post('/predictions/sports', requireAuth, predictionLimiter, validate(sportsPredictionRules), predictions.createSports);
 router.get('/sports/fixtures', requireAuth, validate(fixturesRules), predictions.fixtures);
 

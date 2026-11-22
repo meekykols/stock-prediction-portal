@@ -3,7 +3,7 @@ from rest_framework.decorators import api_view, authentication_classes, permissi
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
-from stocks.services.lstm import stock_model
+from markets.services.lstm import market_model
 
 
 @api_view(["GET"])
@@ -13,6 +13,6 @@ def health(request):
     return Response({
         "success": True,
         "status": "ok",
-        "stockModelLoaded": stock_model.is_loaded,
+        "marketModelLoaded": market_model.is_loaded,
         "sportsDataConfigured": bool(settings.API_FOOTBALL_KEY),
     })

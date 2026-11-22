@@ -10,7 +10,7 @@ const planFields = (optional) => {
     body('currency').optional().isLength({ min: 3, max: 3 }),
     body('features').optional().isArray(),
     body('features.*').optional().isString().trim(),
-    body('limits.stockPredictionsPerDay').optional().isInt({ min: -1 }).toInt(),
+    body('limits.marketPredictionsPerDay').optional().isInt({ min: -1 }).toInt(),
     body('limits.sportsPredictionsPerDay').optional().isInt({ min: -1 }).toInt(),
     body('limits.premiumSignals').optional().isBoolean().toBoolean(),
     body('limits.liveChat').optional().isBoolean().toBoolean(),

@@ -12,7 +12,7 @@ import { formatMoney, INTERVAL } from '../utils/format';
 
 const EMPTY = {
   name: '', slug: '', tagline: '', priceMajor: 0, currency: 'NGN', interval: 'monthly', featuresText: '',
-  limits: { stockPredictionsPerDay: 3, sportsPredictionsPerDay: 3, premiumSignals: false, liveChat: false, apiAccess: false },
+  limits: { marketPredictionsPerDay: 3, sportsPredictionsPerDay: 3, premiumSignals: false, liveChat: false, apiAccess: false },
   highlighted: false, isActive: true, sortOrder: 0,
 };
 
@@ -82,7 +82,7 @@ function PlanModal({ plan, open, onClose, onSaved }) {
       )}
       <FormField as="textarea" rows={5} label="Features (one per line)" value={form.featuresText} onChange={(e) => set({ featuresText: e.target.value })} hint="Shown on the pricing page" />
       <div className="grid gap-x-4 sm:grid-cols-2">
-        <LimitInput label="Stock predictions / day" value={form.limits.stockPredictionsPerDay} onChange={(v) => setLimit('stockPredictionsPerDay', v)} />
+        <LimitInput label="Market predictions / day" value={form.limits.marketPredictionsPerDay} onChange={(v) => setLimit('marketPredictionsPerDay', v)} />
         <LimitInput label="Sports predictions / day" value={form.limits.sportsPredictionsPerDay} onChange={(v) => setLimit('sportsPredictionsPerDay', v)} />
       </div>
       <div className="mt-4 grid gap-3 sm:grid-cols-2">

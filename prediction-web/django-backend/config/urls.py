@@ -4,6 +4,6 @@ from core.views import health
 
 urlpatterns = [
     path("health/", health),
-    path("v1/stocks/", include("stocks.urls")),
+    path("v1/markets/", include("markets.urls")),
     path("v1/sports/", include("sports.urls")),
 ]

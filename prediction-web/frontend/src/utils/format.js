@@ -22,14 +22,42 @@ export const initials = (user) =>
 export const telHref = (phone) => `tel:${String(phone).replace(/[^\d+]/g, '')}`;
 export const waHref = (phone) => `https://wa.me/${String(phone).replace(/\D/g, '')}`;
 
-export function formatPrice(value, currency, locale = 'en-US') {
+/** Decimals that suit the price: 2 for $342, 4 for EUR/USD 1.0970, 6–8 for very cheap coins. */
+export function priceDigits(reference) {
+  const v = Math.abs(Number(reference) || 0);
+  if (v >= 100) return 2;
+  if (v >= 1) return 4;
+  if (v >= 0.01) return 6;
+  return 8;
+}
+
+export function formatPrice(value, currency, reference = value, locale = 'en-US') {
   if (value === null || value === undefined) return '—';
+  const digits = priceDigits(reference);
   try {
-    return new Intl.NumberFormat(locale, { style: 'currency', currency: currency || 'USD', maximumFractionDigits: 2 }).format(value);
+    return new Intl.NumberFormat(locale, {
+      style: 'currency', currency: currency || 'USD', minimumFractionDigits: digits, maximumFractionDigits: digits,
+    }).format(value);
   } catch {
-    return Number(value).toFixed(2);
+    return Number(value).toFixed(digits);
   }
 }
+
+/** Compact axis labels: 3.5K, 61K, 1.0970, 0.0551 */
+export function axisNumber(v, reference) {
+  const ref = Math.abs(Number(reference) || Math.abs(v));
+  if (ref >= 1000) return new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(v);
+  // parseFloat trims trailing zeros: 0.035 rather than 0.035000
+  return String(parseFloat(Number(v).toFixed(Math.max(0, priceDigits(ref) - (ref >= 100 ? 2 : 0)))));
+}
+
+export const ASSET_CLASSES = [
+  { value: 'stock', label: 'Stocks', single: 'Stock', placeholder: 'Ticker, e.g. AAPL or MTNN.LG' },
+  { value: 'forex', label: 'Forex', single: 'Forex', placeholder: 'Currency pair, e.g. EUR/USD' },
+  { value: 'commodity', label: 'Commodities', single: 'Commodity', placeholder: 'e.g. Gold, Crude oil, Cocoa' },
+  { value: 'crypto', label: 'Crypto', single: 'Crypto', placeholder: 'Coin, e.g. BTC or ETH' },
+];
+export const assetLabel = (v) => ASSET_CLASSES.find((a) => a.value === v)?.single ?? 'Market';
 
 export const formatPct = (value, digits = 1) =>
   value === null || value === undefined ? '—' : `${value > 0 ? '+' : ''}${Number(value).toFixed(digits)}%`;

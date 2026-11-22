@@ -4,8 +4,8 @@ export default function Faq() {
   const { siteName, contact } = useSiteConfig();
   const items = [
     {
-      q: `How does ${siteName} make stock predictions?`,
-      a: 'A Long Short-Term Memory (LSTM) neural network is trained on years of daily closing prices. For each ticker you request, it forecasts prices and reports how closely the model tracked real prices (R², RMSE and MSE), so you can judge reliability yourself.',
+      q: `How does ${siteName} make market predictions?`,
+      a: 'A Long Short-Term Memory (LSTM) neural network is trained on years of daily closing prices. For each stock, currency pair, commodity or coin you request, it forecasts prices and reports how closely the model tracked real prices (R², RMSE and MSE), so you can judge reliability yourself.',
     },
     {
       q: 'Which sports are covered?',
