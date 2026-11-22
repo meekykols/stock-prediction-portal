@@ -1,19 +1,19 @@
 import { Link } from 'react-router-dom';
 import { ArrowDownRight, ArrowUpRight, CandlestickChart, ChevronRight, Trophy } from 'lucide-react';
-import { formatDateTime, formatPct, formatPrice, formatProb } from '../../utils/format';
+import { assetLabel, formatDateTime, formatPct, formatPrice, formatProb } from '../../utils/format';
 
-function StockRow({ p }) {
+function MarketRow({ p }) {
   const s = p.summary;
   const up = s.direction === 'up';
   return (
     <>
       <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/15 text-primary"><CandlestickChart className="size-5" /></div>
       <div className="min-w-0 flex-1">
-        <p className="font-mono font-semibold">{s.ticker}</p>
-        <p className="text-xs text-base-content/50">{s.horizonDays}-day outlook · {formatDateTime(p.createdAt)}</p>
+        <p className="font-mono font-semibold">{s.displayName || s.ticker}</p>
+        <p className="text-xs text-base-content/50">{assetLabel(s.assetClass)} · {s.horizonDays}-day outlook · {formatDateTime(p.createdAt)}</p>
       </div>
       <div className="text-right">
-        <p className="font-mono text-sm">{formatPrice(s.targetPrice, s.currency)}</p>
+        <p className="font-mono text-sm">{formatPrice(s.targetPrice, s.currency, s.lastClose)}</p>
         <p className={`flex items-center justify-end gap-0.5 text-xs font-medium ${up ? 'text-success' : 'text-error'}`}>
           {up ? <ArrowUpRight className="size-3.5" /> : <ArrowDownRight className="size-3.5" />}{formatPct(s.changePct)}
         </p>
@@ -46,7 +46,7 @@ export default function PredictionList({ items }) {
       {items.map((p) => (
         <li key={p.id}>
           <Link to={`/app/predictions/${p.id}`} className="flex items-center gap-4 px-4 py-3 transition hover:bg-base-content/5 sm:px-5">
-            {p.type === 'stock' ? <StockRow p={p} /> : <SportsRow p={p} />}
+            {p.type === 'market' ? <MarketRow p={p} /> : <SportsRow p={p} />}
             <ChevronRight className="size-4 shrink-0 text-base-content/30" />
           </Link>
         </li>

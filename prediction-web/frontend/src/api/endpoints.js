@@ -23,7 +23,8 @@ export const predictionsApi = {
   usage: () => unwrap(api.get('/predictions/usage')),
   list: (params) => unwrap(api.get('/predictions', { params })),
   get: (id) => unwrap(api.get(`/predictions/${id}`)),
-  createStock: (body) => unwrap(api.post('/predictions/stocks', body)),
+  createMarket: (body) => unwrap(api.post('/predictions/markets', body)),
+  catalog: () => unwrap(api.get('/markets/catalog')),
   createSports: (body) => unwrap(api.post('/predictions/sports', body)),
   fixtures: (date) => unwrap(api.get('/sports/fixtures', { params: date ? { date } : {} })),
 };

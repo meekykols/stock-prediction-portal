@@ -139,7 +139,7 @@ export default function Dashboard() {
           <div className="glass-card p-5">
             <h2 className="font-semibold">Predictions today</h2>
             <div className="mt-3 grid grid-cols-2 gap-3">
-              <div className="rounded-field bg-primary/10 p-3"><CandlestickChart className="size-4 text-primary" /><p className="mt-1 font-mono text-xl font-bold">{stats.predictions.today.stock || 0}</p><p className="text-xs text-base-content/60">Stocks</p></div>
+              <div className="rounded-field bg-primary/10 p-3"><CandlestickChart className="size-4 text-primary" /><p className="mt-1 font-mono text-xl font-bold">{stats.predictions.today.market || 0}</p><p className="text-xs text-base-content/60">Markets</p></div>
               <div className="rounded-field bg-secondary/10 p-3"><Trophy className="size-4 text-secondary" /><p className="mt-1 font-mono text-xl font-bold">{stats.predictions.today.sports || 0}</p><p className="text-xs text-base-content/60">Sports</p></div>
             </div>
             <p className="mt-3 text-xs text-base-content/50">{stats.predictions.last30.toLocaleString()} in the last 30 days</p>

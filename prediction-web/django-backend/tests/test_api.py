@@ -13,18 +13,24 @@ class ServiceKeyTests(SimpleTestCase):
         self.assertEqual(self.client.get("/health/").status_code, 200)
 
     def test_missing_key_rejected(self):
-        res = self.client.post("/v1/stocks/predict/", {"ticker": "AAPL"}, format="json")
+        res = self.client.post("/v1/markets/predict/", {"assetClass": "stock", "symbol": "AAPL"}, format="json")
         self.assertEqual(res.status_code, 401)
         self.assertFalse(res.json()["success"])
 
     def test_wrong_key_rejected(self):
-        res = self.client.post("/v1/stocks/predict/", {"ticker": "AAPL"}, format="json", HTTP_X_SERVICE_KEY="nope")
+        res = self.client.post("/v1/markets/predict/", {"assetClass": "stock", "symbol": "AAPL"}, format="json", HTTP_X_SERVICE_KEY="nope")
         self.assertEqual(res.status_code, 401)
 
-    def test_invalid_ticker_is_400(self):
-        res = self.client.post("/v1/stocks/predict/", {"ticker": "$$$"}, format="json", HTTP_X_SERVICE_KEY="secret")
+    def test_invalid_symbol_is_400(self):
+        res = self.client.post("/v1/markets/predict/", {"assetClass": "forex", "symbol": "EURO"}, format="json", HTTP_X_SERVICE_KEY="secret")
         self.assertEqual(res.status_code, 400)
-        self.assertIn("ticker", res.json()["errors"])
+        self.assertEqual(res.json()["code"], "invalid_symbol")
+
+    def test_resolve_and_catalog(self):
+        res = self.client.get("/v1/markets/resolve/", {"assetClass": "commodity", "symbol": "Gold"}, HTTP_X_SERVICE_KEY="secret")
+        self.assertEqual(res.json()["data"]["symbol"], "GC=F")
+        cat = self.client.get("/v1/markets/catalog/", HTTP_X_SERVICE_KEY="secret").json()["data"]
+        self.assertEqual(set(cat), {"stock", "forex", "commodity", "crypto"})
 
     @override_settings(API_FOOTBALL_KEY="")
     def test_sports_without_key_is_503(self):

@@ -3,8 +3,9 @@ import mongoose from 'mongoose';
 // One scheduled model output per instrument per day, published to the premium feed.
 const signalSchema = new mongoose.Schema(
   {
-    type: { type: String, enum: ['stock', 'sports'], required: true },
-    key: { type: String, required: true }, // ticker or fixture id
+    type: { type: String, enum: ['market', 'sports'], required: true },
+    assetClass: { type: String, enum: ['stock', 'forex', 'commodity', 'crypto'] }, // market signals only
+    key: { type: String, required: true }, // Yahoo symbol or fixture id
     runDate: { type: String, required: true, index: true }, // YYYY-MM-DD (UTC)
     title: { type: String, required: true },
     subtitle: String,

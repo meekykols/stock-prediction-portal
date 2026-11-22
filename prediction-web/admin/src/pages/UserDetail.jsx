@@ -158,7 +158,7 @@ export default function UserDetail() {
         <div className="glass-card p-5">
           <p className="text-sm text-base-content/60">Predictions</p>
           <div className="mt-3 grid grid-cols-2 gap-3">
-            <div className="rounded-field bg-primary/10 p-3"><CandlestickChart className="size-4 text-primary" /><p className="mt-1 font-mono text-xl font-bold">{predictions.counts.stock || 0}</p><p className="text-xs text-base-content/60">Stocks</p></div>
+            <div className="rounded-field bg-primary/10 p-3"><CandlestickChart className="size-4 text-primary" /><p className="mt-1 font-mono text-xl font-bold">{predictions.counts.market || 0}</p><p className="text-xs text-base-content/60">Markets</p></div>
             <div className="rounded-field bg-secondary/10 p-3"><Trophy className="size-4 text-secondary" /><p className="mt-1 font-mono text-xl font-bold">{predictions.counts.sports || 0}</p><p className="text-xs text-base-content/60">Sports</p></div>
           </div>
           <p className="mt-3 text-xs text-base-content/50">Last: {formatDateTime(predictions.lastAt)}</p>

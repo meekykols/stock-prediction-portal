@@ -4,7 +4,7 @@ import { getCurrentEntitlement } from './subscription.service.js';
 import { mlService } from './ml.service.js';
 
 const LIMIT_FIELD = {
-  [PREDICTION_TYPES.STOCK]: 'stockPredictionsPerDay',
+  [PREDICTION_TYPES.MARKET]: 'marketPredictionsPerDay',
   [PREDICTION_TYPES.SPORTS]: 'sportsPredictionsPerDay',
 };
 
@@ -36,7 +36,7 @@ async function assertQuota(userId, type) {
   const { plan } = await getCurrentEntitlement(userId);
   const usage = (await getUsage(userId, plan))[type];
   if (usage.limit !== -1 && usage.used >= usage.limit) {
-    const what = type === PREDICTION_TYPES.STOCK ? 'stock' : 'sports';
+    const what = type === PREDICTION_TYPES.MARKET ? 'market' : 'sports';
     throw new ApiError(
       429,
       `You've used all ${usage.limit} ${what} predictions on the ${plan?.name ?? 'current'} plan today. Upgrade for more, or come back after midnight UTC.`,
@@ -53,9 +53,12 @@ function findTodaysRepeat(userId, key) {
     .select('+result');
 }
 
-function stockSummary(r) {
+function marketSummary(r) {
   return {
-    ticker: r.ticker,
+    assetClass: r.assetClass,
+    symbol: r.symbol,
+    displayName: r.displayName,
+    unit: r.unit,
     currency: r.currency,
     lastClose: r.lastClose,
     lastDate: r.lastDate,
@@ -94,15 +97,16 @@ async function create(userId, type, input, key, runModel, summarize) {
   return { prediction, reused: false };
 }
 
-export function createStockPrediction(userId, { ticker, horizon }) {
-  const t = ticker.trim().toUpperCase();
+export async function createMarketPrediction(userId, { assetClass, symbol, horizon }) {
+  // Resolve first so "EUR/USD", "eurusd" and "EURUSD=X" count as the same request.
+  const inst = await mlService.resolveMarket({ assetClass, symbol });
   return create(
     userId,
-    PREDICTION_TYPES.STOCK,
-    { ticker: t, horizon },
-    `stock:${t}:${horizon}`,
-    () => mlService.predictStock({ ticker: t, horizon }),
-    stockSummary,
+    PREDICTION_TYPES.MARKET,
+    { assetClass, symbol: inst.symbol, horizon },
+    `market:${inst.symbol}:${horizon}`,
+    () => mlService.predictMarket({ assetClass, symbol: inst.symbol, horizon }),
+    marketSummary,
   );
 }
 
@@ -120,7 +124,7 @@ export function createSportsPrediction(userId, { fixtureId }) {
 export async function listPredictions(userId, query = {}) {
   const page = Math.max(1, Number(query.page) || 1);
   const limit = Math.min(50, Math.max(1, Number(query.limit) || 20));
-  const type = ['stock', 'sports'].includes(query.type) ? query.type : undefined;
+  const type = Object.values(PREDICTION_TYPES).includes(query.type) ? query.type : undefined;
   const filter = { user: userId, ...(type && { type }) };
   const [items, total] = await Promise.all([
     Prediction.find(filter).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit),

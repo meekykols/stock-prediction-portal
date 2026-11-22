@@ -109,7 +109,7 @@ export async function serviceHealth() {
   let ml = { ok: false };
   try {
     const res = await axios.get(`${env.mlService.url.replace(/\/$/, '')}/health/`, { timeout: 3000 });
-    ml = { ok: true, stockModelLoaded: res.data.stockModelLoaded, sportsDataConfigured: res.data.sportsDataConfigured };
+    ml = { ok: true, marketModelLoaded: res.data.marketModelLoaded, sportsDataConfigured: res.data.sportsDataConfigured };
   } catch {
     /* offline */
   }

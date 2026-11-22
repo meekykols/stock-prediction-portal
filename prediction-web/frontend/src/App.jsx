@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect } from 'react';
-import { Route, Routes, useLocation } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import PublicLayout from './components/layout/PublicLayout';
 import AppLayout from './components/layout/AppLayout';
@@ -18,7 +18,7 @@ const NotFound = lazy(() => import('./pages/public/NotFound'));
 const Login = lazy(() => import('./pages/auth/Login'));
 const Register = lazy(() => import('./pages/auth/Register'));
 const Overview = lazy(() => import('./pages/app/Overview'));
-const StockPredictions = lazy(() => import('./pages/app/StockPredictions'));
+const MarketPredictions = lazy(() => import('./pages/app/MarketPredictions'));
 const SportsPredictions = lazy(() => import('./pages/app/SportsPredictions'));
 const Billing = lazy(() => import('./pages/app/Billing'));
 const Settings = lazy(() => import('./pages/app/Settings'));
@@ -64,7 +64,8 @@ export default function App() {
           <Route path="app" element={<ProtectedRoute />}>
             <Route element={<AppLayout />}>
               <Route index element={<Overview />} />
-              <Route path="stocks" element={<StockPredictions />} />
+              <Route path="markets" element={<MarketPredictions />} />
+              <Route path="stocks" element={<Navigate to="/app/markets" replace />} />
               <Route path="sports" element={<SportsPredictions />} />
               <Route path="signals" element={<Signals />} />
               <Route path="signals/:id" element={<SignalDetail />} />

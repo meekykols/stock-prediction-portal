@@ -1,7 +1,7 @@
 import cron from 'node-cron';
 import { expireLapsedSubscriptions } from '../services/subscription.service.js';
 import { abandonStalePayments } from '../services/billing.service.js';
-import { runSportsSignals, runStockSignals } from '../services/signals.service.js';
+import { runMarketSignals, runSportsSignals } from '../services/signals.service.js';
 
 /**
  * Run on exactly one instance in production (set RUN_SCHEDULER=false on the others),
@@ -34,8 +34,8 @@ export function startScheduler() {
       const n = await abandonStalePayments();
       if (n) console.log(`[scheduler] marked ${n} checkout(s) abandoned`);
     }), utc),
-    // Weekdays 21:30 UTC, after the US market close: stock signals.
-    cron.schedule('30 21 * * 1-5', safely('stock-signals', () => runStockSignals()), utc),
+    // Daily 21:30 UTC, after the US close: all markets on weekdays, crypto only at weekends.
+    cron.schedule('30 21 * * *', safely('market-signals', () => runMarketSignals()), utc),
     // Daily 06:00 UTC: sports signals for today's fixtures.
     cron.schedule('0 6 * * *', safely('sports-signals', () => runSportsSignals()), utc),
   ];

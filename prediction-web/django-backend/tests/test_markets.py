@@ -3,7 +3,7 @@ import pandas as pd
 from django.test import SimpleTestCase
 
 from core.errors import InsufficientData
-from stocks.services.lstm import WINDOW, run_prediction
+from markets.services.lstm import WINDOW, _digits, run_prediction
 
 
 class PersistenceModel:
@@ -18,7 +18,7 @@ def series(n=800):
     return pd.Series(100 + np.cumsum(np.random.default_rng(1).normal(0, 1, n)), index=idx)
 
 
-class StockPipelineTests(SimpleTestCase):
+class PricePipelineTests(SimpleTestCase):
     def test_shapes_and_metrics(self):
         close = series()
         result = run_prediction(close, horizon=5, model=PersistenceModel())
@@ -46,3 +46,18 @@ class StockPipelineTests(SimpleTestCase):
     def test_short_history_rejected(self):
         with self.assertRaises(InsufficientData):
             run_prediction(series(WINDOW + 50), horizon=1, model=PersistenceModel())
+
+    def test_crypto_forecast_uses_calendar_days(self):
+        close = series()
+        result = run_prediction(close, horizon=7, model=PersistenceModel(), calendar="daily")
+        dates = pd.to_datetime([f["date"] for f in result["forecast"]])
+        self.assertEqual((dates[-1] - dates[0]).days, 6)
+        self.assertTrue(any(d.weekday() >= 5 for d in dates))
+
+    def test_price_precision_follows_magnitude(self):
+        self.assertEqual(_digits(342.56), 3)
+        self.assertEqual(_digits(1.0853), 5)
+        self.assertEqual(_digits(0.0000123), 10)
+        fx = pd.Series(1.08 + np.cumsum(np.random.default_rng(2).normal(0, 0.002, 800)), index=pd.bdate_range("2022-01-03", periods=800))
+        result = run_prediction(fx, horizon=1, model=PersistenceModel())
+        self.assertNotEqual(result["lastClose"], round(result["lastClose"], 2))

@@ -25,7 +25,7 @@ ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="127.0.0.1,localhost", cast=Csv(
 INSTALLED_APPS = [
     "rest_framework",
     "core",
-    "stocks",
+    "markets",
     "sports",
 ]
 
@@ -62,7 +62,8 @@ TIME_ZONE = "UTC"
 # --- Service config -------------------------------------------------------
 ML_SERVICE_API_KEY = config("ML_SERVICE_API_KEY", default="")
 
-STOCK_MODEL_PATH = BASE_DIR / "ml_models" / "stock_lstm.keras"
+# Trained on AAPL daily closes (Resources/stock_prediction_using_LSTM.ipynb); used for every market.
+MARKET_MODEL_PATH = BASE_DIR / "ml_models" / "stock_lstm.keras"
 STOCK_HISTORY_YEARS = 10
 STOCK_MAX_HORIZON = 30
 

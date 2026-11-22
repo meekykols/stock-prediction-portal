@@ -12,7 +12,8 @@ const planSchema = new mongoose.Schema(
     features: [{ type: String, trim: true }],
     limits: {
       // -1 means unlimited
-      stockPredictionsPerDay: { type: Number, default: 3 },
+      // Shared by stocks, forex, commodities and crypto
+      marketPredictionsPerDay: { type: Number, default: 3 },
       sportsPredictionsPerDay: { type: Number, default: 3 },
       premiumSignals: { type: Boolean, default: false },
       liveChat: { type: Boolean, default: false },

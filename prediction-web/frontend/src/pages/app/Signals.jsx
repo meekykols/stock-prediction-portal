@@ -10,9 +10,9 @@ import { errorMessage } from '../../api/client';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { formatDate, formatDateTime, formatPct, formatPrice, formatProb } from '../../utils/format';
 
-const TYPES = [{ value: '', label: 'All' }, { value: 'stock', label: 'Stocks' }, { value: 'sports', label: 'Sports' }];
+const TYPES = [{ value: '', label: 'All' }, { value: 'market', label: 'Markets' }, { value: 'sports', label: 'Sports' }];
 
-function StockCard({ s, locked }) {
+function MarketCard({ s, locked }) {
   const up = s.summary.direction === 'up';
   return (
     <>
@@ -21,7 +21,7 @@ function StockCard({ s, locked }) {
           <div className="grid size-10 place-items-center rounded-xl bg-primary/15 text-primary"><CandlestickChart className="size-5" /></div>
           <div>
             <p className="font-mono text-lg font-bold">{s.title}</p>
-            <p className="text-xs text-base-content/50">{s.subtitle} · last {formatPrice(s.summary.lastClose, s.summary.currency)}</p>
+            <p className="text-xs text-base-content/50">{s.subtitle}{s.summary.lastClose !== undefined && ` · last ${formatPrice(s.summary.lastClose, s.summary.currency)}`}</p>
           </div>
         </div>
         {!locked && (
@@ -34,7 +34,7 @@ function StockCard({ s, locked }) {
         <div className="mt-4 flex items-end justify-between">
           <div>
             <p className="text-xs text-base-content/50">Model target</p>
-            <p className="font-display text-2xl font-bold">{formatPrice(s.summary.targetPrice, s.summary.currency)}</p>
+            <p className="font-display text-2xl font-bold">{formatPrice(s.summary.targetPrice, s.summary.currency, s.summary.lastClose)}</p>
           </div>
           <p className="text-xs text-base-content/50">Hit rate {formatProb(s.summary.directionalAccuracy)}</p>
         </div>
@@ -104,7 +104,7 @@ export default function Signals() {
     <>
       <PageHeader
         title="Signals"
-        subtitle="Model outputs published on a schedule: stocks after the US close, football each morning (UTC)."
+        subtitle="Model outputs published on a schedule: markets after the US close (crypto daily), football each morning (UTC)."
         actions={data?.dates?.length > 0 && (
           <select className="select select-sm" value={data.date || ''} onChange={(e) => set({ date: e.target.value })} aria-label="Run date">
             {data.dates.map((d) => <option key={d} value={d}>{formatDate(d)}</option>)}
@@ -141,7 +141,7 @@ export default function Signals() {
             const body = (
               <div className={`glass-card relative h-full p-5 ${locked ? '' : 'glass-card-hover'} ${top?.id === s.id ? 'border-primary/50' : ''}`}>
                 {top?.id === s.id && <span className="badge badge-primary badge-sm absolute -top-2 right-4">Strongest</span>}
-                {s.type === 'stock' ? <StockCard s={s} locked={locked} /> : <SportsCard s={s} locked={locked} />}
+                {s.type === 'market' ? <MarketCard s={s} locked={locked} /> : <SportsCard s={s} locked={locked} />}
               </div>
             );
             return locked ? <div key={s.id}>{body}</div> : <Link key={s.id} to={`/app/signals/${s.id}`}>{body}</Link>;

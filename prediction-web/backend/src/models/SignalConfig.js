@@ -4,9 +4,15 @@ const signalConfigSchema = new mongoose.Schema(
   {
     key: { type: String, default: 'main', unique: true, immutable: true },
     enabled: { type: Boolean, default: true },
-    stocks: {
+    markets: {
       enabled: { type: Boolean, default: true },
-      tickers: { type: [String], default: ['AAPL', 'MSFT', 'NVDA', 'TSLA', 'AMZN', 'GOOGL', 'META'] },
+      // What staff type; resolved to Yahoo symbols at run time (e.g. "EUR/USD", "gold", "BTC").
+      watchlist: {
+        stock: { type: [String], default: ['AAPL', 'MSFT', 'NVDA', 'TSLA', 'AMZN'] },
+        forex: { type: [String], default: ['EUR/USD', 'GBP/USD', 'USD/JPY', 'USD/NGN'] },
+        commodity: { type: [String], default: ['Gold', 'Crude oil (WTI)', 'Silver'] },
+        crypto: { type: [String], default: ['BTC', 'ETH', 'SOL'] },
+      },
       horizon: { type: Number, default: 5, min: 1, max: 30 },
     },
     sports: {

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, Lock } from 'lucide-react';
 import EmptyState from '../../components/ui/EmptyState';
-import StockResult from '../../components/predictions/StockResult';
+import MarketResult from '../../components/predictions/MarketResult';
 import SportsResult from '../../components/predictions/SportsResult';
 import { signalsApi } from '../../api/endpoints';
 import { errorMessage } from '../../api/client';
@@ -33,7 +33,7 @@ export default function SignalDetail() {
           {state.message}
         </EmptyState>
       )}
-      {state.status === 'ready' && (state.signal.type === 'stock' ? <StockResult result={state.signal.result} /> : <SportsResult result={state.signal.result} />)}
+      {state.status === 'ready' && (state.signal.type === 'market' ? <MarketResult result={state.signal.result} /> : <SportsResult result={state.signal.result} />)}
     </>
   );
 }

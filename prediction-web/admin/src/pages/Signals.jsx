@@ -7,14 +7,20 @@ import { errorMessage, fieldErrors } from '../api/client';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { formatDate, formatDateTime, fullName } from '../utils/format';
 
-const JOBS = { 'stock-signals': 'Stock signals', 'sports-signals': 'Sports signals' };
+const JOBS = { 'market-signals': 'Market signals', 'sports-signals': 'Sports signals' };
+const MARKETS = [
+  { value: 'stock', label: 'Stocks', hint: 'e.g. AAPL, MTNN.LG' },
+  { value: 'forex', label: 'Forex', hint: 'e.g. EUR/USD, USD/NGN' },
+  { value: 'commodity', label: 'Commodities', hint: 'e.g. Gold, Crude oil' },
+  { value: 'crypto', label: 'Crypto', hint: 'e.g. BTC, ETH' },
+];
 const RUN_BADGE = { running: 'badge-info', success: 'badge-success', partial: 'badge-warning', failed: 'badge-error', skipped: 'badge-ghost' };
 const duration = (r) => (r.finishedAt ? `${Math.max(1, Math.round((new Date(r.finishedAt) - new Date(r.startedAt)) / 1000))}s` : '…');
 
-function TickerInput({ value, onChange }) {
+function SymbolInput({ value, onChange, hint }) {
   const [draft, setDraft] = useState('');
   const add = () => {
-    const parts = draft.toUpperCase().split(/[\s,]+/).filter(Boolean);
+    const parts = draft.split(',').map((s) => s.trim()).filter(Boolean);
     if (parts.length) onChange([...new Set([...value, ...parts])]);
     setDraft('');
   };
@@ -26,8 +32,8 @@ function TickerInput({ value, onChange }) {
         </span>
       ))}
       <input value={draft} onChange={(e) => setDraft(e.target.value)} onBlur={add}
-        onKeyDown={(e) => { if (['Enter', ',', ' '].includes(e.key)) { e.preventDefault(); add(); } }}
-        placeholder={value.length ? 'Add ticker…' : 'e.g. AAPL, MTNN.LG'} className="min-w-28 flex-1 bg-transparent font-mono text-sm outline-none" aria-label="Add ticker" />
+        onKeyDown={(e) => { if (['Enter', ','].includes(e.key)) { e.preventDefault(); add(); } }}
+        placeholder={value.length ? 'Add…' : hint} className="min-w-28 flex-1 bg-transparent font-mono text-sm outline-none" aria-label="Add symbol" />
     </div>
   );
 }
@@ -58,7 +64,7 @@ export default function Signals() {
   const save = async () => {
     setSaving(true);
     try {
-      const res = await signalsApi.saveConfig({ enabled: config.enabled, stocks: config.stocks, sports: config.sports });
+      const res = await signalsApi.saveConfig({ enabled: config.enabled, markets: config.markets, sports: config.sports });
       setConfig(res.data);
       toast.success(res.message);
     } catch (e) {
@@ -78,19 +84,24 @@ export default function Signals() {
         <div className="grid gap-6 xl:grid-cols-2">
           <div className="glass-card p-5">
             <div className="flex items-center justify-between">
-              <h2 className="font-semibold">Stock signals</h2>
-              <label className="label cursor-pointer gap-2 text-sm"><input type="checkbox" className="toggle toggle-primary toggle-sm" checked={config.stocks.enabled} onChange={(e) => setGroup('stocks', { enabled: e.target.checked })} /> On</label>
+              <h2 className="font-semibold">Market signals</h2>
+              <label className="label cursor-pointer gap-2 text-sm"><input type="checkbox" className="toggle toggle-primary toggle-sm" checked={config.markets.enabled} onChange={(e) => setGroup('markets', { enabled: e.target.checked })} /> On</label>
             </div>
-            <p className="mt-1 text-xs text-base-content/60">Runs weekdays at 21:30 UTC, after the US market close.</p>
-            <p className="mb-2 mt-4 text-sm font-medium">Watchlist ({config.stocks.tickers.length})</p>
-            <TickerInput value={config.stocks.tickers} onChange={(tickers) => setGroup('stocks', { tickers })} />
+            <p className="mt-1 text-xs text-base-content/60">Runs daily at 21:30 UTC: every market on weekdays, crypto only at weekends. Symbols are checked when you save.</p>
+            {MARKETS.map(({ value, label, hint }) => (
+              <div key={value} className="mt-4">
+                <p className="mb-1.5 text-sm font-medium">{label} ({config.markets.watchlist[value]?.length || 0})</p>
+                <SymbolInput value={config.markets.watchlist[value] || []} hint={hint}
+                  onChange={(list) => setGroup('markets', { watchlist: { ...config.markets.watchlist, [value]: list } })} />
+              </div>
+            ))}
             <label className="mt-4 flex items-center gap-3 text-sm">Outlook
-              <select className="select select-sm w-auto" value={config.stocks.horizon} onChange={(e) => setGroup('stocks', { horizon: Number(e.target.value) })}>
+              <select className="select select-sm w-auto" value={config.markets.horizon} onChange={(e) => setGroup('markets', { horizon: Number(e.target.value) })}>
                 {[1, 3, 5, 7, 14].map((h) => <option key={h} value={h}>{h} day{h > 1 ? 's' : ''}</option>)}
               </select>
             </label>
-            <button type="button" className="btn btn-sm btn-ghost mt-4 border-base-content/10" onClick={() => run('stock-signals')} disabled={runs.running.includes('stock-signals')}>
-              {runs.running.includes('stock-signals') ? <span className="loading loading-spinner loading-xs" /> : <Play className="size-4" />} Run now
+            <button type="button" className="btn btn-sm btn-ghost mt-4 border-base-content/10" onClick={() => run('market-signals')} disabled={runs.running.includes('market-signals')}>
+              {runs.running.includes('market-signals') ? <span className="loading loading-spinner loading-xs" /> : <Play className="size-4" />} Run now
             </button>
           </div>
           <div className="glass-card p-5">
@@ -155,14 +166,14 @@ export default function Signals() {
             <tbody>
               {feed.items.map((s) => (
                 <tr key={s.id}>
-                  <td className="capitalize">{s.type}</td>
+                  <td>{s.type === 'market' ? ({ stock: 'Stock', forex: 'Forex', commodity: 'Commodity', crypto: 'Crypto' }[s.assetClass] || 'Market') : 'Sports'}</td>
                   <td><p className="font-medium">{s.title}</p><p className="text-xs text-base-content/50">{s.subtitle}</p></td>
                   <td className="text-sm">
-                    {s.type === 'stock'
-                      ? <span className={s.summary.direction === 'up' ? 'text-success' : 'text-error'}>{s.summary.changePct > 0 ? '+' : ''}{s.summary.changePct}% → {s.summary.targetPrice} {s.summary.currency}</span>
+                    {s.type === 'market'
+                      ? <span className={s.summary.direction === 'up' ? 'text-success' : 'text-error'}>{s.summary.changePct > 0 ? '+' : ''}{s.summary.changePct}% → {s.summary.targetPrice} {s.summary.unit || s.summary.currency}</span>
                       : <span>{{ home: s.summary.home, draw: 'Draw', away: s.summary.away }[s.summary.pick?.outcome]} ({Math.round(s.summary.pick?.probability * 100)}%)</span>}
                   </td>
-                  <td className="text-right font-mono">{s.type === 'stock' ? `${s.strength.toFixed(2)}%` : `${s.strength}%`}</td>
+                  <td className="text-right font-mono">{s.type === 'market' ? `${s.strength.toFixed(2)}%` : `${s.strength}%`}</td>
                 </tr>
               ))}
             </tbody>

@@ -1,13 +1,13 @@
 # Prediction Web
 
-Subscription platform for AI stock and sports predictions.
+Subscription platform for AI predictions on stocks, forex, commodities, crypto and football.
 
 | Folder | What it is | Status |
 | --- | --- | --- |
 | `backend/` | Express + MongoDB (Mongoose) API, Socket.IO, scheduler | Phase 1 ✅ |
 | `frontend/` | Customer site + dashboard (React, Tailwind v4, daisyUI 5, Redux Toolkit) | Phase 2 ✅ |
 | `admin/` | Staff console (React, Tailwind v4, daisyUI 5, Redux Toolkit), permission-based | Phase 5 ✅ |
-| `django-backend/` | Stateless ML microservice (stock LSTM, sports Poisson model), called only by Express | Phase 3 ✅ |
+| `django-backend/` | Stateless ML microservice (market LSTM, sports Poisson model), called only by Express | Phase 3 ✅ |
 
 ## Run locally
 
@@ -70,20 +70,32 @@ Admin (`/api/admin`): `auth/*`, `site-config`, `plans` (CRUD, archive), `users`,
 
 ## Predictions (Phase 3)
 
+Markets supported (all daily data from Yahoo Finance):
+
+| Market | What users type | Fetched as |
+| --- | --- | --- |
+| Stocks | `AAPL`, `MTNN.LG`, `^GSPC` | as typed |
+| Forex | `EUR/USD`, `eurusd`, `EURUSD=X` | `EURUSD=X` |
+| Commodities | `Gold`, `Crude oil`, `GC=F` (curated list of 12) | futures, e.g. `GC=F` |
+| Crypto | `BTC`, `btc-usd`, `BTC/USD` | `BTC-USD` (forecasts include weekends) |
+
 ```
 Browser ──► Express /api/v1/predictions/* ──► Django /v1/* (X-Service-Key)
-              │  checks plan quota              │  stocks: Yahoo Finance + LSTM (Keras on JAX)
+              │  checks plan quota              │  markets: Yahoo Finance + LSTM (Keras on JAX)
               │  saves result in MongoDB        │  sports: API-Football + Poisson goals model
 ```
 
-- `POST /api/v1/predictions/stocks` `{ ticker, horizon }` and `POST /api/v1/predictions/sports` `{ fixtureId }`
+- `POST /api/v1/predictions/markets` `{ assetClass, symbol, horizon }` and `POST /api/v1/predictions/sports` `{ fixtureId }`
+- `GET /api/v1/markets/catalog`: suggested symbols per market
 - `GET /api/v1/predictions`, `/predictions/:id`, `/predictions/usage`, `/sports/fixtures?date=YYYY-MM-DD`
-- Daily quotas come from the plan (`limits.stockPredictionsPerDay`, `-1` = unlimited) and reset at 00:00 UTC.
+- Daily quotas come from the plan (`limits.marketPredictionsPerDay`, shared by all four markets, and
+  `limits.sportsPredictionsPerDay`; `-1` = unlimited) and reset at 00:00 UTC.
   Repeating the same ticker/fixture on the same day returns the saved result without using quota.
-- Stock results include price history with 100/200-day averages, a backtest on the last 30% of data,
+- Market results include price history with 100/200-day averages, a backtest on the last 30% of data,
   a recursive multi-day forecast, and metrics (R², RMSE, MAE, MAPE, directional accuracy).
-- The stock model in `django-backend/ml_models/stock_lstm.keras` was trained on AAPL only
-  (`Resources/stock_prediction_using_LSTM.ipynb`). Its next-day direction accuracy is around 50%,
+- The model in `django-backend/ml_models/stock_lstm.keras` was trained on AAPL only
+  (`Resources/stock_prediction_using_LSTM.ipynb`) and is applied to every market after per-series scaling.
+  Its next-day direction accuracy is around 50% across stocks, forex, commodities and crypto,
   so the UI shows that figure prominently.
 
 ## Billing (Phase 4, Paystack)
@@ -142,7 +154,7 @@ titles with the outlook removed server-side). Signals don't count toward daily p
 
 | Job | Schedule (UTC) | What it does |
 | --- | --- | --- |
-| stock-signals | 21:30 Mon–Fri | Runs the LSTM on the admin watchlist |
+| market-signals | 21:30 daily | All four markets on weekdays, crypto only at weekends |
 | sports-signals | 06:00 daily | Analyses today's upcoming fixtures (needs `API_FOOTBALL_KEY`) |
 | expire / abandon | every 15 min / hourly | Lapses subscriptions, closes stale checkouts |
 
@@ -156,4 +168,4 @@ in `frontend/.env` and `admin/.env`, and allow WebSocket upgrades at your proxy 
 ## Roadmap
 
 All six planned phases are done. Possible next steps: email notifications (receipts, chat replies),
-retraining the stock model for direction accuracy, a trained sports model, and deployment.
+retraining the market model for direction accuracy (ideally per asset class), a trained sports model, and deployment.

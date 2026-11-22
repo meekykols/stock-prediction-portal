@@ -42,8 +42,8 @@ export default function About() {
           <div>
             <h2 className="text-2xl font-bold">What we build</h2>
             <p className="mt-4 text-base-content/70">
-              {siteName} combines deep-learning stock models with statistical sports analysis behind one subscription. Our stock
-              engine uses LSTM networks trained on historical closing prices; our sports engine weighs recent form, head-to-head
+              {siteName} combines deep-learning market models with statistical sports analysis behind one subscription. Our market
+              engine uses an LSTM network on historical closing prices for stocks, forex, commodities and crypto; our sports engine weighs recent form, head-to-head
               history and team statistics.
             </p>
           </div>

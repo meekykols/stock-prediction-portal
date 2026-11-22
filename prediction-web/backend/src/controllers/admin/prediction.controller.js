@@ -6,11 +6,11 @@ import { escapeRegex, paged, paging } from '../../utils/paging.js';
 export const list = asyncHandler(async (req, res) => {
   const p = paging(req.query);
   const filter = {};
-  if (['stock', 'sports'].includes(req.query.type)) filter.type = req.query.type;
+  if (['market', 'sports'].includes(req.query.type)) filter.type = req.query.type;
   if (req.query.q) {
     const rx = new RegExp(escapeRegex(req.query.q), 'i');
     const ids = await User.find({ $or: [{ email: rx }, { firstName: rx }, { lastName: rx }] }).distinct('_id');
-    filter.$or = [{ user: { $in: ids } }, { 'summary.ticker': rx }, { 'summary.home': rx }, { 'summary.away': rx }];
+    filter.$or = [{ user: { $in: ids } }, { 'summary.symbol': rx }, { 'summary.displayName': rx }, { 'summary.home': rx }, { 'summary.away': rx }];
   }
   const [items, total] = await Promise.all([
     Prediction.find(filter).sort({ createdAt: -1 }).skip(p.skip).limit(p.limit).populate('user', 'firstName lastName email'),

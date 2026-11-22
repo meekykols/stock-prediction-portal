@@ -12,12 +12,13 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useAuth } from '../../hooks/useAuth';
 
 const COVERAGE = [
-  'AAPL', 'Premier League', 'NVDA', 'La Liga', 'TSLA', 'Serie A', 'MSFT',
-  'Bundesliga', 'AMZN', 'Champions League', 'GOOGL', 'Ligue 1', 'META',
+  'AAPL', 'EUR/USD', 'Premier League', 'BTC', 'Gold', 'La Liga', 'NVDA', 'GBP/USD',
+  'ETH', 'Crude oil', 'Champions League', 'USD/NGN', 'SOL', 'Silver', 'Serie A', 'TSLA',
 ];
+const SPORTS = new Set(['Premier League', 'La Liga', 'Champions League', 'Serie A']);
 
 const FEATURES = [
-  { icon: CandlestickChart, title: 'Stock forecasts', text: 'LSTM models trained on a decade of daily prices forecast where a ticker is heading, with 100- and 200-day moving averages for context.' },
+  { icon: CandlestickChart, title: 'Market forecasts', text: 'Stocks, forex, commodities and crypto: an LSTM model trained on years of daily prices forecasts where each is heading, with 100- and 200-day moving averages for context.' },
   { icon: Trophy, title: 'Sports analysis', text: 'Form, head-to-head records and team statistics combine into match predictions with clear probability estimates.' },
   { icon: Gauge, title: 'Transparent accuracy', text: 'Every forecast ships with R², RMSE and MSE. You see how well the model fits before you rely on it.' },
   { icon: Zap, title: 'Premium signals', text: 'A curated feed of the strongest model outputs, delivered to your dashboard as soon as they are generated.' },
@@ -49,7 +50,7 @@ function Hero() {
             <span className="text-gradient">Read the game.</span>
           </h1>
           <p className="mt-6 max-w-xl text-lg text-base-content/70">
-            {siteName} turns deep-learning models into clear, measurable forecasts for stocks and sports.
+            {siteName} turns deep-learning models into clear, measurable forecasts for stocks, forex, commodities, crypto and football.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link to={isAuthenticated ? '/app' : '/register'} className="btn btn-primary btn-lg rounded-full">
@@ -100,7 +101,7 @@ function CoverageMarquee() {
         <div className="flex w-max animate-marquee gap-10">
           {items.map((item, i) => (
             <span key={`${item}-${i}`} className="flex items-center gap-3 whitespace-nowrap font-mono text-sm text-base-content/60">
-              <span className={`size-1.5 rounded-full ${/^[A-Z]+$/.test(item) ? 'bg-primary' : 'bg-secondary'}`} />
+              <span className={`size-1.5 rounded-full ${SPORTS.has(item) ? 'bg-secondary' : 'bg-primary'}`} />
               {item}
             </span>
           ))}

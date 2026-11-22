@@ -48,19 +48,19 @@ export default function Overview() {
       <PageHeader
         title={`${greeting}, ${user?.firstName}`}
         subtitle="Your plan and today's activity at a glance."
-        actions={<Link to="/app/stocks" className="btn btn-primary"><Zap className="size-4" /> New prediction</Link>}
+        actions={<Link to="/app/markets" className="btn btn-primary"><Zap className="size-4" /> New prediction</Link>}
       />
 
       <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
         <StatTile icon={Crown} label="Current plan" value={plan?.name ?? '—'} hint={subscription?.endsAt ? `Renews ${formatDate(subscription.endsAt)}` : 'Free forever'} />
-        <StatTile icon={CandlestickChart} label="Stock predictions today" value={usageValue(usage?.stock)} hint={usageHint(usage?.stock)} tone="secondary" />
+        <StatTile icon={CandlestickChart} label="Market predictions today" value={usageValue(usage?.market)} hint={usageHint(usage?.market)} tone="secondary" />
         <StatTile icon={Trophy} label="Sports predictions today" value={usageValue(usage?.sports)} hint={usageHint(usage?.sports)} tone="accent" />
         <StatTile icon={Zap} label="Premium signals" value={plan?.limits?.premiumSignals ? 'On' : 'Off'} hint={plan?.limits?.premiumSignals ? 'Included in your plan' : 'Available on paid plans'} />
       </div>
 
       <div className="mt-8 grid gap-5 lg:grid-cols-2">
         {[
-          { to: '/app/stocks', icon: CandlestickChart, title: 'Stock predictions', text: 'Forecast a ticker with the LSTM model and review its accuracy.' },
+          { to: '/app/markets', icon: CandlestickChart, title: 'Market predictions', text: 'Forecast stocks, forex, commodities and crypto with the LSTM model.' },
           { to: '/app/sports', icon: Trophy, title: 'Sports predictions', text: 'Browse fixtures and get win, draw and goals probabilities.' },
         ].map(({ to, icon: Icon, title, text }) => (
           <Link key={to} to={to} className="glass-card glass-card-hover group flex items-start gap-4 p-6">

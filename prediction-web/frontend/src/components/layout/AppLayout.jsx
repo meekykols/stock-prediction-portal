@@ -19,7 +19,7 @@ import { initials } from '../../utils/format';
 
 const NAV = [
   { to: '/app', key: 'overview', icon: LayoutDashboard, end: true },
-  { to: '/app/stocks', key: 'stocks', icon: CandlestickChart },
+  { to: '/app/markets', key: 'markets', icon: CandlestickChart },
   { to: '/app/sports', key: 'sports', icon: Trophy },
   { to: '/app/signals', key: 'signals', icon: Radio },
   { to: '/app/history', key: 'history', icon: History },

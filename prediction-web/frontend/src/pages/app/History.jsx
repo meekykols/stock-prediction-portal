@@ -8,7 +8,7 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
 const FILTERS = [
   { value: '', label: 'All' },
-  { value: 'stock', label: 'Stocks' },
+  { value: 'market', label: 'Markets' },
   { value: 'sports', label: 'Sports' },
 ];
 

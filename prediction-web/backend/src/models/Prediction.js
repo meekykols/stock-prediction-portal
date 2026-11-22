@@ -1,12 +1,14 @@
 import mongoose from 'mongoose';
 
-export const PREDICTION_TYPES = Object.freeze({ STOCK: 'stock', SPORTS: 'sports' });
+// market = stocks, forex, commodities and crypto (see input.assetClass)
+export const PREDICTION_TYPES = Object.freeze({ MARKET: 'market', SPORTS: 'sports' });
+export const ASSET_CLASSES = Object.freeze(['stock', 'forex', 'commodity', 'crypto']);
 
 const predictionSchema = new mongoose.Schema(
   {
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     type: { type: String, enum: Object.values(PREDICTION_TYPES), required: true },
-    // What was asked: { ticker, horizon } or { fixtureId }. `key` identifies repeats.
+    // What was asked: { assetClass, symbol, horizon } or { fixtureId }. `key` identifies repeats.
     input: { type: mongoose.Schema.Types.Mixed, required: true },
     key: { type: String, required: true },
     // Small fields for lists and cards; `result` holds the full ML payload.

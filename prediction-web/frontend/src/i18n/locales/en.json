@@ -10,14 +10,14 @@
   },
   "app": {
     "overview": "Overview",
-    "stocks": "Stock predictions",
     "sports": "Sports predictions",
     "billing": "Plan & billing",
     "settings": "Settings",
     "logout": "Sign out",
     "viewSite": "View website",
     "history": "History",
-    "signals": "Signals"
+    "signals": "Signals",
+    "markets": "Markets"
   },
   "footer": {
     "product": "Product",

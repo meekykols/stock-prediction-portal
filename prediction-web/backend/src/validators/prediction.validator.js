@@ -1,11 +1,9 @@
 import { body, param, query } from 'express-validator';
+import { ASSET_CLASSES } from '../models/Prediction.js';
 
-export const stockPredictionRules = [
-  body('ticker')
-    .trim()
-    .toUpperCase()
-    .matches(/^[A-Z0-9][A-Z0-9.\-=^]{0,14}$/)
-    .withMessage('Enter a valid ticker symbol, e.g. AAPL or MTNN.LG'),
+export const marketPredictionRules = [
+  body('assetClass').isIn(ASSET_CLASSES).withMessage('Choose stocks, forex, commodities or crypto'),
+  body('symbol').isString().trim().isLength({ min: 1, max: 30 }).withMessage('Enter a symbol'),
   body('horizon').optional().isInt({ min: 1, max: 30 }).withMessage('Horizon must be 1 to 30 days').toInt(),
 ];
 
@@ -14,7 +12,7 @@ export const sportsPredictionRules = [
 ];
 
 export const listPredictionRules = [
-  query('type').optional().isIn(['stock', 'sports']),
+  query('type').optional().isIn(['market', 'sports']),
   query('page').optional().isInt({ min: 1 }).toInt(),
   query('limit').optional().isInt({ min: 1, max: 50 }).toInt(),
 ];

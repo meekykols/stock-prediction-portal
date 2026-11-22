@@ -5,7 +5,7 @@ import {
 import { ArrowDownRight, ArrowUpRight, Brain, Info, Minus } from 'lucide-react';
 import { C, axisProps, downsample, tooltipStyle } from './chartTheme';
 import { useSiteConfig } from '../../hooks/useSiteConfig';
-import { formatDate, formatPct, formatPrice } from '../../utils/format';
+import { assetLabel, axisNumber, formatDate, formatPct, formatPrice } from '../../utils/format';
 
 const RANGES = [
   { key: '6M', days: 126 },
@@ -37,12 +37,14 @@ function directionHint(acc) {
   return { tone: 'text-success', hint: 'Calls daily direction well' };
 }
 
-export default function StockResult({ result }) {
+export default function MarketResult({ result }) {
   const { legal } = useSiteConfig();
   const [tab, setTab] = useState('price');
   const [range, setRange] = useState('1Y');
-  const { ticker, currency, outlook, metrics, model } = result;
-  const money = (v) => formatPrice(v, currency);
+  const { currency, outlook, metrics, model } = result;
+  const name = result.displayName || result.ticker;
+  const money = (v) => formatPrice(v, currency, result.lastClose);
+  const tick = (v) => axisNumber(v, result.lastClose);
 
   const priceRows = useMemo(() => {
     const { dates, close, ma100, ma200 } = result.history;
@@ -80,8 +82,12 @@ export default function StockResult({ result }) {
         <div className="glass-card p-6 lg:col-span-2">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <p className="font-mono text-sm text-base-content/50">{currency || '—'} · last close {formatDate(result.lastDate)}</p>
-              <h2 className="mt-1 font-display text-4xl font-bold">{ticker}</h2>
+              <div className="flex flex-wrap items-center gap-2 text-sm text-base-content/50">
+                <span className="badge badge-primary badge-soft badge-sm">{assetLabel(result.assetClass)}</span>
+                <span className="font-mono">{result.unit || currency || '—'} · last close {formatDate(result.lastDate)}</span>
+              </div>
+              <h2 className="mt-1 font-display text-4xl font-bold">{name}</h2>
+              {result.symbol && result.symbol !== name && <p className="font-mono text-xs text-base-content/40">{result.symbol}</p>}
             </div>
             <div className="text-right">
               <p className="font-display text-3xl font-bold">{money(result.lastClose)}</p>
@@ -137,7 +143,7 @@ export default function StockResult({ result }) {
                 </defs>
                 <CartesianGrid stroke={C.grid} vertical={false} />
                 <XAxis dataKey="date" {...axisProps} minTickGap={48} />
-                <YAxis {...axisProps} width={64} domain={['auto', 'auto']} tickFormatter={(v) => v.toFixed(0)} />
+                <YAxis {...axisProps} width={72} domain={['auto', 'auto']} tickFormatter={tick} />
                 <Tooltip {...tooltipStyle} formatter={(v) => money(v)} />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
                 <Area type="monotone" dataKey="close" name="Close" stroke={C.primary} strokeWidth={2} fill="url(#closeFill)" dot={false} isAnimationActive={false} />
@@ -148,7 +154,7 @@ export default function StockResult({ result }) {
               <ComposedChart data={backtestRows} margin={{ left: 4, right: 8, top: 4 }}>
                 <CartesianGrid stroke={C.grid} vertical={false} />
                 <XAxis dataKey="date" {...axisProps} minTickGap={48} />
-                <YAxis {...axisProps} width={64} domain={['auto', 'auto']} tickFormatter={(v) => v.toFixed(0)} />
+                <YAxis {...axisProps} width={72} domain={['auto', 'auto']} tickFormatter={tick} />
                 <Tooltip {...tooltipStyle} formatter={(v) => money(v)} />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
                 <Line type="monotone" dataKey="actual" name="Actual" stroke={C.primary} strokeWidth={2} dot={false} isAnimationActive={false} />
@@ -158,7 +164,7 @@ export default function StockResult({ result }) {
               <ComposedChart data={forecastRows} margin={{ left: 4, right: 8, top: 4 }}>
                 <CartesianGrid stroke={C.grid} vertical={false} />
                 <XAxis dataKey="date" {...axisProps} minTickGap={32} />
-                <YAxis {...axisProps} width={64} domain={['auto', 'auto']} tickFormatter={(v) => v.toFixed(0)} />
+                <YAxis {...axisProps} width={72} domain={['auto', 'auto']} tickFormatter={tick} />
                 <Tooltip {...tooltipStyle} formatter={(v) => money(v)} />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
                 <ReferenceLine x={result.lastDate} stroke={C.axis} strokeDasharray="3 3" label={{ value: 'Last close', fill: C.axis, fontSize: 11, position: 'insideTopLeft' }} />
