@@ -16,6 +16,7 @@ const Tips = lazy(() => import('./pages/public/Tips'));
 const AppTips = lazy(() => import('./pages/app/Tips'));
 const BookingCodes = lazy(() => import('./pages/app/BookingCodes'));
 const Contest = lazy(() => import('./pages/app/Contest'));
+const CryptoSignals = lazy(() => import('./pages/app/CryptoSignals'));
 const About = lazy(() => import('./pages/public/About'));
 const Contact = lazy(() => import('./pages/public/Contact'));
 const NotFound = lazy(() => import('./pages/public/NotFound'));
@@ -74,6 +75,7 @@ export default function App() {
               <Route path="tips" element={<AppTips />} />
               <Route path="codes" element={<BookingCodes />} />
               <Route path="contest" element={<Contest />} />
+              <Route path="crypto-signals" element={<CryptoSignals />} />
               <Route path="sports" element={<SportsPredictions />} />
               <Route path="signals" element={<Signals />} />
               <Route path="signals/:id" element={<SignalDetail />} />

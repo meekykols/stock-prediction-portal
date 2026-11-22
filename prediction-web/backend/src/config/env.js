@@ -41,4 +41,13 @@ export const env = {
     apiKey: process.env.ML_SERVICE_API_KEY || '',
   },
   apiFootballKey: process.env.API_FOOTBALL_KEY || '',
+  // Public futures market data. Overridable for tests or a regional proxy.
+  exchanges: {
+    binance: (process.env.BINANCE_FUTURES_URL || 'https://fapi.binance.com').replace(/\/$/, ''),
+    bybit: (process.env.BYBIT_URL || 'https://api.bybit.com').replace(/\/$/, ''),
+  },
+  telegram: {
+    botToken: process.env.TELEGRAM_BOT_TOKEN || '',
+    apiBase: (process.env.TELEGRAM_API_BASE || 'https://api.telegram.org').replace(/\/$/, ''),
+  },
 };

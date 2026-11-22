@@ -118,3 +118,15 @@ export const contestApi = {
     return api.post(`/promos/${id}/image`, form).then((r) => r.data);
   },
 };
+
+export const cryptoApi = {
+  config: () => unwrap(api.get('/crypto/config')),
+  saveConfig: (body) => api.put('/crypto/config', body).then((r) => r.data),
+  market: (exchange, symbol) => unwrap(api.get('/crypto/market', { params: { exchange, symbol } })),
+  candles: (exchange, symbol, timeframe) => unwrap(api.get('/crypto/candles', { params: { exchange, symbol, timeframe } })),
+  list: (params) => unwrap(api.get('/crypto/signals', { params: clean(params) })),
+  create: (body) => api.post('/crypto/signals', body).then((r) => r.data),
+  cancel: (id) => api.post(`/crypto/signals/${id}/cancel`).then((r) => r.data),
+  track: () => api.post('/crypto/track').then((r) => r.data),
+  stats: () => unwrap(api.get('/crypto/stats')),
+};

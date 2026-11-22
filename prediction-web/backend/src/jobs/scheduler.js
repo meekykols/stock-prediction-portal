@@ -4,6 +4,8 @@ import { abandonStalePayments } from '../services/billing.service.js';
 import { runMarketSignals, runSportsSignals } from '../services/signals.service.js';
 import { generateTips, settleTips } from '../services/tips.service.js';
 import { endExpiredPromos } from '../services/contest.service.js';
+import { trackSignals } from '../services/cryptoSignals.service.js';
+import { startPolling, stopPolling } from '../services/telegram.service.js';
 
 /**
  * Run on exactly one instance in production (set RUN_SCHEDULER=false on the others),
@@ -45,11 +47,18 @@ export function startScheduler() {
     cron.schedule('0 5,15 * * *', safely('sports-tips', () => generateTips()), utc),
     // Hourly at :20: settle tips whose events should have finished.
     cron.schedule('20 * * * *', safely('tips-settle', () => settleTips()), utc),
+    // Every minute: follow open crypto signals through the latest 1-minute candles.
+    cron.schedule('* * * * *', safely('crypto-track', () => trackSignals()), utc),
     // Hourly: take down adverts past their end date.
     cron.schedule('3 * * * *', safely('promos', async () => {
       const n = await endExpiredPromos();
       if (n) console.log(`[scheduler] ended ${n} advert(s)`);
     }), utc),
   ];
-  return () => jobs.forEach((j) => j.stop());
+  // Telegram updates (account linking, /stop) are read on the scheduler instance only.
+  startPolling().catch((err) => console.error('[telegram] stopped:', err.message));
+  return () => {
+    jobs.forEach((j) => j.stop());
+    stopPolling();
+  };
 }

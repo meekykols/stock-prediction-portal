@@ -68,3 +68,10 @@ export const contestApi = {
   winners: () => unwrap(api.get('/contest/winners')),
   promos: () => unwrap(api.get('/promos')),
 };
+
+export const cryptoApi = {
+  feed: (params) => unwrap(api.get('/crypto-signals', { params })),
+  telegram: () => unwrap(api.get('/telegram')),
+  telegramLink: () => unwrap(api.post('/telegram/link')),
+  telegramUnlink: () => api.delete('/telegram').then((r) => r.data),
+};

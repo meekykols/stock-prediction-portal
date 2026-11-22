@@ -3,7 +3,7 @@ import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import {
-  CandlestickChart, CreditCard, Flame, Medal, Globe, History, LayoutDashboard, LogOut, Menu, Radio, Settings, Ticket, Trophy,
+  Bitcoin, CandlestickChart, CreditCard, Flame, Medal, Globe, History, LayoutDashboard, LogOut, Menu, Radio, Settings, Ticket, Trophy,
 } from 'lucide-react';
 import Logo from '../ui/Logo';
 import ThemeToggle from '../ui/ThemeToggle';
@@ -22,6 +22,7 @@ const NAV = [
   { to: '/app/tips', key: 'tips', icon: Flame },
   { to: '/app/codes', key: 'codes', icon: Ticket },
   { to: '/app/contest', key: 'contest', icon: Medal },
+  { to: '/app/crypto-signals', key: 'crypto', icon: Bitcoin },
   { to: '/app/markets', key: 'markets', icon: CandlestickChart },
   { to: '/app/sports', key: 'sports', icon: Trophy },
   { to: '/app/signals', key: 'signals', icon: Radio },

@@ -10,6 +10,7 @@ export const PERMISSIONS = Object.freeze({
   TIPS_MANAGE: 'tips.manage',
   CODES_MANAGE: 'codes.manage',
   CONTEST_MANAGE: 'contest.manage',
+  CRYPTO_SIGNALS: 'crypto.signals',
   MESSAGES_VIEW: 'messages.view',
   CHAT_RESPOND: 'chat.respond',
   SETTINGS_MANAGE: 'settings.manage',
