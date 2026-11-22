@@ -23,6 +23,7 @@ export default function Footer({ isDark }) {
         <div>
           <h4 className="text-sm font-semibold uppercase tracking-wider text-base-content/50">{t('footer.product')}</h4>
           <ul className="mt-4 space-y-2 text-sm">
+            <li><Link className="link link-hover" to="/tips">{t('nav.tips')}</Link></li>
             <li><Link className="link link-hover" to="/pricing">{t('nav.pricing')}</Link></li>
             <li><Link className="link link-hover" to="/register">{t('nav.register')}</Link></li>
             <li><Link className="link link-hover" to="/about">{t('nav.about')}</Link></li>

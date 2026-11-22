@@ -10,6 +10,14 @@ import * as predictions from '../../controllers/admin/prediction.controller.js';
 import * as account from '../../controllers/admin/account.controller.js';
 import * as chat from '../../controllers/admin/chat.controller.js';
 import * as signals from '../../controllers/admin/signal.controller.js';
+import * as tips from '../../controllers/admin/tips.controller.js';
+import * as codes from '../../controllers/admin/codes.controller.js';
+import * as contest from '../../controllers/admin/contest.controller.js';
+import { awardRules, contestConfigRules, exportRules, monthQuery, promoRules } from '../../validators/contest.validator.js';
+import {
+  codeResultRules, codesConfigRules, createCodeRules, selectionResultRules, tipSearchRules, updateCodeRules,
+} from '../../validators/codes.validator.js';
+import { leaguesRules, overrideRules, runTipsJobRules, tipsConfigRules } from '../../validators/tips.validator.js';
 import { conversationListRules, messageRules, runJobRules, signalConfigRules } from '../../validators/chat.validator.js';
 import { chatLimiter } from '../../middlewares/rateLimit.js';
 import { changePasswordRules } from '../../validators/auth.validator.js';
@@ -67,6 +75,41 @@ router.get('/signals/config', requirePermission(P.PREDICTIONS_MANAGE), signals.c
 router.put('/signals/config', requirePermission(P.PREDICTIONS_MANAGE), validate(signalConfigRules), signals.updateConfig);
 router.get('/signals/runs', requirePermission(P.PREDICTIONS_MANAGE), signals.runs);
 router.post('/signals/run', requirePermission(P.PREDICTIONS_MANAGE), validate(runJobRules), signals.runNow);
+
+const tipsPerm = requirePermission(P.TIPS_MANAGE);
+router.get('/tips', tipsPerm, tips.list);
+router.get('/tips/stats', tipsPerm, tips.stats);
+router.get('/tips/config', tipsPerm, tips.config);
+router.put('/tips/config', tipsPerm, validate(tipsConfigRules), tips.updateConfig);
+router.get('/tips/leagues', tipsPerm, validate(leaguesRules), tips.leagues);
+router.get('/tips/runs', tipsPerm, tips.runs);
+router.post('/tips/run', tipsPerm, validate(runTipsJobRules), tips.runNow);
+router.post('/tips/:id/result', tipsPerm, validate(overrideRules), tips.override);
+
+const codesPerm = requirePermission(P.CODES_MANAGE);
+router.get('/codes', codesPerm, codes.list);
+router.get('/codes/stats', codesPerm, codes.stats);
+router.get('/codes/config', codesPerm, codes.config);
+router.put('/codes/config', codesPerm, validate(codesConfigRules), codes.updateConfig);
+router.get('/codes/tip-options', codesPerm, validate(tipSearchRules), codes.tipOptions);
+router.post('/codes', codesPerm, validate(createCodeRules), codes.create);
+router.patch('/codes/:id', codesPerm, validate(updateCodeRules), codes.update);
+router.delete('/codes/:id', codesPerm, id, codes.withdraw);
+router.post('/codes/:id/result', codesPerm, validate(codeResultRules), codes.setResult);
+router.post('/codes/:id/selections/:index/result', codesPerm, validate(selectionResultRules), codes.setSelectionResult);
+
+const contestPerm = requirePermission(P.CONTEST_MANAGE);
+router.get('/contest/config', contestPerm, contest.config);
+router.put('/contest/config', contestPerm, validate(contestConfigRules), contest.updateConfig);
+router.get('/contest/leaderboard', contestPerm, validate(monthQuery), contest.leaderboard);
+router.post('/contest/months/:month/rewards', contestPerm, validate(awardRules), contest.award);
+router.get('/contest/rewards', contestPerm, contest.rewards);
+router.post('/contest/rewards/:id/paid', contestPerm, id, contest.markPaid);
+router.get('/contest/export', contestPerm, validate(exportRules), contest.exportCsv);
+router.get('/promos', contestPerm, contest.promos);
+router.post('/promos', contestPerm, contest.createPromo);
+router.patch('/promos/:id', contestPerm, validate(promoRules), contest.updatePromo);
+router.post('/promos/:id/image', contestPerm, id, uploadImage.single('image'), contest.uploadPromoImage);
 
 const chatPerm = requirePermission(P.CHAT_RESPOND);
 router.get('/chat/conversations', chatPerm, validate(conversationListRules), chat.list);

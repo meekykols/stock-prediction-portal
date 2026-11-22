@@ -4,9 +4,10 @@ from django.core.cache import cache
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from core.errors import InsufficientData
-from .serializers import FixturesQuery, SportsPredictionRequest
-from .services import api_football, poisson
+from core.errors import InsufficientData, ServiceError
+from .serializers import SPORT_CHOICES, EventsQuery, FixturesQuery, SportsPredictionRequest, TipsRequest
+from .services import api_football, poisson, providers
+from .services.tips import build_tips
 
 FINISHED = {"FT", "AET", "PEN"}
 
@@ -49,3 +50,28 @@ def predict(request):
         cache.set(key, result, 30 * 60)
 
     return Response({"success": True, "data": result})
+
+
+@api_view(["GET"])
+def events(request):
+    """Every event of a sport on a day, with final scores once finished. Used to settle tips."""
+    query = EventsQuery(data=request.query_params)
+    query.is_valid(raise_exception=True)
+    sport, day = query.validated_data["sport"], query.validated_data["date"].isoformat()
+    return Response({"success": True, "data": {"sport": sport, "date": day, "events": providers.events_on(sport, day, fresh=True)}})
+
+
+@api_view(["POST"])
+def tips(request):
+    params = TipsRequest(data=request.data)
+    params.is_valid(raise_exception=True)
+    v = params.validated_data
+    return Response({"success": True, "data": build_tips(v["sport"], v["date"].isoformat(), v.get("leagues"))})
+
+
+@api_view(["GET"])
+def leagues(request):
+    sport = request.query_params.get("sport")
+    if sport not in SPORT_CHOICES:
+        raise ServiceError("Unknown sport.", code="invalid_sport")
+    return Response({"success": True, "data": {"sport": sport, "leagues": providers.leagues(sport)}})

@@ -17,6 +17,7 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.preprocessing import MinMaxScaler
 
 from core.errors import InsufficientData, UpstreamUnavailable
+from .ranges import likely_ranges, up_day_rate
 
 logger = logging.getLogger(__name__)
 
@@ -121,6 +122,8 @@ def run_prediction(close: pd.Series, horizon: int, model=market_model, calendar:
         "mape": round(float(np.mean(np.abs((actual - predicted) / actual)) * 100), 3),
         "r2": round(float(r2_score(actual, predicted)), 4),
         "directionalAccuracy": _round([_directional_accuracy(actual, predicted)], 4)[0],
+        # Baseline for the line above: share of test days the price simply rose.
+        "upDaysRate": up_day_rate(actual),
         "testDays": int(len(actual)),
     }
 
@@ -167,5 +170,6 @@ def run_prediction(close: pd.Series, horizon: int, model=market_model, calendar:
             {"date": d.strftime("%Y-%m-%d"), "price": round(float(p), nd)} for d, p in zip(future_dates, future)
         ],
         "metrics": metrics,
+        "ranges": likely_ranges(close, horizon, future_dates, nd),
         "model": MODEL_INFO,
     }

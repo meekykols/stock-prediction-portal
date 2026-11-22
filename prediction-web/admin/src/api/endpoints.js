@@ -76,3 +76,44 @@ export const signalsApi = {
   runs: () => unwrap(api.get('/signals/runs')),
   run: (job) => api.post('/signals/run', { job }).then((r) => r.data),
 };
+
+export const tipsApi = {
+  list: (params) => unwrap(api.get('/tips', { params: clean(params) })),
+  stats: () => unwrap(api.get('/tips/stats')),
+  config: () => unwrap(api.get('/tips/config')),
+  saveConfig: (body) => api.put('/tips/config', body).then((r) => r.data),
+  leagues: (sport) => unwrap(api.get('/tips/leagues', { params: { sport } })),
+  runs: () => unwrap(api.get('/tips/runs')),
+  run: (job) => api.post('/tips/run', { job }).then((r) => r.data),
+  setResult: (id, body) => api.post(`/tips/${id}/result`, body).then((r) => r.data),
+};
+
+export const codesApi = {
+  list: (params) => unwrap(api.get('/codes', { params: clean(params) })),
+  stats: () => unwrap(api.get('/codes/stats')),
+  config: () => unwrap(api.get('/codes/config')),
+  saveConfig: (body) => api.put('/codes/config', body).then((r) => r.data),
+  tipOptions: (params) => unwrap(api.get('/codes/tip-options', { params: clean(params) })),
+  create: (body) => api.post('/codes', body).then((r) => r.data),
+  update: (id, body) => api.patch(`/codes/${id}`, body).then((r) => r.data),
+  withdraw: (id) => api.delete(`/codes/${id}`).then((r) => r.data),
+  setResult: (id, body) => api.post(`/codes/${id}/result`, body).then((r) => r.data),
+  setSelectionResult: (id, index, state) => api.post(`/codes/${id}/selections/${index}/result`, { state }).then((r) => r.data),
+};
+
+export const contestApi = {
+  config: () => unwrap(api.get('/contest/config')),
+  saveConfig: (body) => api.put('/contest/config', body).then((r) => r.data),
+  leaderboard: (month) => unwrap(api.get('/contest/leaderboard', { params: { month } })),
+  award: (month, body) => api.post(`/contest/months/${month}/rewards`, body).then((r) => r.data),
+  markPaid: (id) => api.post(`/contest/rewards/${id}/paid`).then((r) => r.data),
+  exportCsv: (params) => api.get('/contest/export', { params, responseType: 'blob' }).then((r) => r.data),
+  promos: () => unwrap(api.get('/promos')),
+  createPromo: () => api.post('/promos', {}).then((r) => r.data),
+  savePromo: (id, body) => api.patch(`/promos/${id}`, body).then((r) => r.data),
+  uploadPromoImage: (id, file) => {
+    const form = new FormData();
+    form.append('image', file);
+    return api.post(`/promos/${id}/image`, form).then((r) => r.data);
+  },
+};

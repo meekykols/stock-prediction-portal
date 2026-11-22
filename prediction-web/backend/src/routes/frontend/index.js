@@ -6,11 +6,19 @@ import * as predictions from '../../controllers/frontend/prediction.controller.j
 import * as billing from '../../controllers/frontend/billing.controller.js';
 import * as chat from '../../controllers/frontend/chat.controller.js';
 import * as signals from '../../controllers/frontend/signal.controller.js';
+import * as tips from '../../controllers/frontend/tips.controller.js';
+import * as codes from '../../controllers/frontend/codes.controller.js';
+import * as contest from '../../controllers/frontend/contest.controller.js';
+import { monthQuery, submitSlipRules } from '../../validators/contest.validator.js';
+import { listCodesRules } from '../../validators/codes.validator.js';
+import { listTipsRules } from '../../validators/tips.validator.js';
 import { messageRules } from '../../validators/chat.validator.js';
 import { checkoutRules, referenceRules } from '../../validators/billing.validator.js';
-import { requireAuth } from '../../middlewares/auth.js';
+import { optionalAuth, requireAuth } from '../../middlewares/auth.js';
 import { validate } from '../../middlewares/validate.js';
-import { authLimiter, chatLimiter, contactLimiter, predictionLimiter } from '../../middlewares/rateLimit.js';
+import {
+  authLimiter, chatLimiter, contactLimiter, contestLimiter, predictionLimiter,
+} from '../../middlewares/rateLimit.js';
 import { uploadImage } from '../../middlewares/upload.js';
 import {
   changePasswordRules, loginRules, registerRules, updateProfileRules,
@@ -26,6 +34,22 @@ const router = Router();
 router.get('/site-config', pub.siteConfig);
 router.get('/plans', pub.listPlans);
 router.post('/contact', contactLimiter, validate(contactRules), pub.sendContactMessage);
+
+// Daily sports tips: public, with more detail for plans that have full access
+router.get('/tips', optionalAuth, validate(listTipsRules), tips.list);
+router.get('/tips/record', tips.record);
+
+// Booking codes: visible to the plans switched on in the console; others see locked cards
+router.get('/codes', optionalAuth, validate(listCodesRules), codes.list);
+router.post('/codes/:id/copy', requireAuth, validate(predictionIdRules), codes.copy);
+
+// Picks contest
+router.get('/contest', requireAuth, contest.state);
+router.post('/contest/slips', requireAuth, contestLimiter, validate(submitSlipRules), contest.submit);
+router.get('/contest/slips', requireAuth, contest.slips);
+router.get('/contest/leaderboard', optionalAuth, validate(monthQuery), contest.leaderboard);
+router.get('/contest/winners', contest.winners);
+router.get('/promos', contest.promos);
 
 // Auth
 router.post('/auth/register', authLimiter, validate(registerRules), auth.register);

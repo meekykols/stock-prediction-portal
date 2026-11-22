@@ -2,6 +2,8 @@ import cron from 'node-cron';
 import { expireLapsedSubscriptions } from '../services/subscription.service.js';
 import { abandonStalePayments } from '../services/billing.service.js';
 import { runMarketSignals, runSportsSignals } from '../services/signals.service.js';
+import { generateTips, settleTips } from '../services/tips.service.js';
+import { endExpiredPromos } from '../services/contest.service.js';
 
 /**
  * Run on exactly one instance in production (set RUN_SCHEDULER=false on the others),
@@ -38,6 +40,16 @@ export function startScheduler() {
     cron.schedule('30 21 * * *', safely('market-signals', () => runMarketSignals()), utc),
     // Daily 06:00 UTC: sports signals for today's fixtures.
     cron.schedule('0 6 * * *', safely('sports-signals', () => runSportsSignals()), utc),
+    // 05:00 and 15:00 UTC: tips for today and tomorrow (the afternoon run picks up late fixtures
+    // and refreshes unstarted tips with the latest results).
+    cron.schedule('0 5,15 * * *', safely('sports-tips', () => generateTips()), utc),
+    // Hourly at :20: settle tips whose events should have finished.
+    cron.schedule('20 * * * *', safely('tips-settle', () => settleTips()), utc),
+    // Hourly: take down adverts past their end date.
+    cron.schedule('3 * * * *', safely('promos', async () => {
+      const n = await endExpiredPromos();
+      if (n) console.log(`[scheduler] ended ${n} advert(s)`);
+    }), utc),
   ];
   return () => jobs.forEach((j) => j.stop());
 }

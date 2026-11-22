@@ -1,6 +1,7 @@
 {
   "nav": {
     "home": "Home",
+    "tips": "Tips",
     "pricing": "Pricing",
     "about": "About",
     "contact": "Contact",
@@ -17,7 +18,10 @@
     "viewSite": "View website",
     "history": "History",
     "signals": "Signals",
-    "markets": "Markets"
+    "markets": "Markets",
+    "tips": "Daily tips",
+    "codes": "Booking codes",
+    "contest": "Picks contest"
   },
   "footer": {
     "product": "Product",

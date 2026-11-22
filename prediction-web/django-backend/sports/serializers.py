@@ -15,3 +15,21 @@ class FixturesQuery(serializers.Serializer):
 
 class SportsPredictionRequest(serializers.Serializer):
     fixtureId = serializers.IntegerField(min_value=1)
+
+
+SPORT_CHOICES = ("football", "basketball", "american-football", "volleyball", "mma")
+
+
+class EventsQuery(serializers.Serializer):
+    sport = serializers.ChoiceField(choices=SPORT_CHOICES)
+    date = serializers.DateField()
+
+    def validate_date(self, value):
+        today = date.today()
+        if not (today - timedelta(days=7) <= value <= today + timedelta(days=7)):
+            raise serializers.ValidationError("Pick a date within a week of today.")
+        return value
+
+
+class TipsRequest(EventsQuery):
+    leagues = serializers.ListField(child=serializers.IntegerField(min_value=0), required=False, allow_empty=True, max_length=200)

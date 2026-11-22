@@ -29,6 +29,21 @@ const authenticate = (audience) =>
     next();
   });
 
+/** Public pages that show more to signed-in customers. Never rejects; sets req.user when valid. */
+export const optionalAuth = asyncHandler(async (req, _res, next) => {
+  const token = readBearer(req);
+  if (token) {
+    try {
+      const payload = verifyAccessToken(token, AUDIENCE.CUSTOMER);
+      const user = await User.findById(payload.sub);
+      if (user?.status === 'active') req.user = user;
+    } catch {
+      // expired or invalid: treat as a guest
+    }
+  }
+  next();
+});
+
 /** Customer site (/api/v1). */
 export const requireAuth = authenticate(AUDIENCE.CUSTOMER);
 

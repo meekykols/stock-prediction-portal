@@ -43,3 +43,14 @@ export const chatLimiter = rateLimit({
   legacyHeaders: false,
   message,
 });
+
+// Contest entries: per account rather than per IP, since many mobile users share a carrier IP.
+// Use after requireAuth.
+export const contestLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 20,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  keyGenerator: (req) => `user:${req.user._id}`,
+  message,
+});

@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 
 const jobRunSchema = new mongoose.Schema(
   {
-    job: { type: String, enum: ['market-signals', 'sports-signals'], required: true, index: true },
+    job: { type: String, enum: ['market-signals', 'sports-signals', 'sports-tips', 'tips-settle'], required: true, index: true },
     trigger: { type: String, enum: ['schedule', 'manual'], default: 'schedule' },
     triggeredBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     status: { type: String, enum: ['running', 'success', 'partial', 'failed', 'skipped'], default: 'running' },

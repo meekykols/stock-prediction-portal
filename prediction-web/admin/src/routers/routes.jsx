@@ -1,6 +1,6 @@
 import { lazy } from 'react';
 import {
-  BarChart3, CreditCard, FileClock, Inbox, LayoutDashboard, MessagesSquare, Package, Radio, Settings2, ShieldCheck, Sparkles, Users,
+  BarChart3, CreditCard, FileClock, Flame, Inbox, LayoutDashboard, Medal, MessagesSquare, Package, Radio, Settings2, ShieldCheck, Sparkles, Ticket, Users,
 } from 'lucide-react';
 import { P } from './permissions';
 
@@ -17,6 +17,9 @@ const SiteSettings = lazy(() => import('../pages/SiteSettings'));
 const Account = lazy(() => import('../pages/Account'));
 const Chat = lazy(() => import('../pages/Chat'));
 const SignalsPage = lazy(() => import('../pages/Signals'));
+const TipsPage = lazy(() => import('../pages/Tips'));
+const CodesPage = lazy(() => import('../pages/BookingCodes'));
+const ContestPage = lazy(() => import('../pages/Contest'));
 
 /**
  * One list drives the router, the sidebar and the permission checks.
@@ -31,6 +34,9 @@ export const ROUTES = [
   { path: '/payments', label: 'Payments', icon: CreditCard, permission: P.SUBSCRIPTIONS_VIEW, element: <Payments />, section: 'Billing' },
   { path: '/plans', label: 'Plans', icon: Package, permission: P.PLANS_MANAGE, element: <Plans />, section: 'Billing' },
   { path: '/predictions', label: 'Predictions', icon: Sparkles, permission: P.PREDICTIONS_MANAGE, element: <Predictions />, section: 'Activity' },
+  { path: '/tips', label: 'Sports tips', icon: Flame, permission: P.TIPS_MANAGE, element: <TipsPage />, section: 'Activity' },
+  { path: '/codes', label: 'Booking codes', icon: Ticket, permission: P.CODES_MANAGE, element: <CodesPage />, section: 'Activity' },
+  { path: '/contest', label: 'Picks contest', icon: Medal, permission: P.CONTEST_MANAGE, element: <ContestPage />, section: 'Activity' },
   { path: '/signals', label: 'Signals', icon: Radio, permission: P.PREDICTIONS_MANAGE, element: <SignalsPage />, section: 'Activity' },
   { path: '/messages', label: 'Messages', icon: Inbox, permission: P.MESSAGES_VIEW, element: <Messages />, section: 'Activity' },
   { path: '/staff', label: 'Staff', icon: ShieldCheck, permission: 'superadmin', element: <Staff />, section: 'System' },
