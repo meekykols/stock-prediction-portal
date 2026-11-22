@@ -17,6 +17,13 @@ const tipsConfigSchema = new mongoose.Schema(
     previewCount: { type: Number, default: 3, min: 0, max: 50 },
     // A tip is a "Top tip" when the model rates it high confidence.
     featuredConfidence: { type: String, enum: ['high', 'medium'], default: 'high' },
+    // Bookmaker odds: combined with the model, or used alone when the model has no data.
+    odds: {
+      enabled: { type: Boolean, default: true },
+      marketWeight: { type: Number, default: 0.6, min: 0, max: 1 }, // share of the bookmakers' view
+      valueEdge: { type: Number, default: 0.05, min: 0, max: 0.5 }, // model minus market to flag "value"
+      maxCallsPerRun: { type: Number, default: 40, min: 0, max: 1000 }, // per sport and day; protects the API quota
+    },
   },
   {
     timestamps: true,

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Ban, CircleCheck, CircleX, Flame, Lock, RefreshCw, Sparkles } from 'lucide-react';
+import { Ban, CircleCheck, CircleX, Flame, Gem, Landmark, Lock, RefreshCw, Sparkles } from 'lucide-react';
 import { tipsApi } from '../../api/endpoints';
 import { useAuth } from '../../hooks/useAuth';
 import { useSiteConfig } from '../../hooks/useSiteConfig';
@@ -57,6 +57,18 @@ function LockedCell({ upgradeTo }) {
   );
 }
 
+const pct = (v) => `${Math.round(v * 100)}%`;
+const OUTCOME_LABEL = (tip, o) => (o === 'draw' ? 'Draw' : `${tip[o]?.name}`);
+
+/** Where the chance comes from, for the hover text. */
+function sourceTitle(p) {
+  const o = p.pick.outcome;
+  const parts = [];
+  if (p.model?.probabilities?.[o] != null) parts.push(`Our model ${pct(p.model.probabilities[o])}`);
+  if (p.market?.probabilities?.[o] != null) parts.push(`Bookmakers ${pct(p.market.probabilities[o])} (${p.market.bookmakers} books)`);
+  return parts.join(' · ');
+}
+
 function TipRow({ tip, upgradeTo }) {
   const p = tip.prediction;
   const ps = p?.predictedScore;
@@ -83,12 +95,22 @@ function TipRow({ tip, upgradeTo }) {
             <span className="grid size-7 shrink-0 place-items-center rounded-md bg-primary/15 font-mono text-sm font-bold text-primary">{pickCode(p.pick.outcome)}</span>
             <div className="min-w-0">
               <p className="truncate text-sm font-medium">{pickLabel(tip)}{ps && <span className="ml-1 text-base-content/50 md:hidden">({ps.home}–{ps.away})</span>}</p>
-              <p className="truncate text-xs text-base-content/50" title={p.markets?.map(marketLabel).join(' · ')}>{p.markets?.map(marketLabel).join(' · ') || 'Winner only'}</p>
+              <p className="truncate text-xs text-base-content/50" title={p.markets?.map(marketLabel).join(' · ')}>{p.markets?.map((m) => `${marketLabel(m)}${m.odds ? ` @${m.odds}` : ''}`).join(' · ') || 'Winner only'}</p>
+              {(p.source === 'market' || p.value) && (
+                <p className="mt-0.5 flex flex-wrap gap-1">
+                  {p.source === 'market' && <span className="badge badge-xs badge-ghost gap-1" title="Our model has no data for this competition yet, so this tip is the bookmakers' consensus"><Landmark className="size-3" />Bookmakers</span>}
+                  {p.value && (
+                    <span className="badge badge-xs badge-accent badge-soft gap-1" title={`Our model ${pct(p.value.modelProbability)} vs bookmakers ${pct(p.value.marketProbability)}`}>
+                      <Gem className="size-3" />Value: {OUTCOME_LABEL(tip, p.value.outcome)} @{p.value.odds}
+                    </span>
+                  )}
+                </p>
+              )}
             </div>
           </div>
           <div className="col-start-2 flex items-center gap-2 md:col-start-auto">
-            <progress className="progress progress-primary w-16" value={Math.round(p.pick.probability * 100)} max="100" />
-            <span className="font-mono text-xs">{formatProb(p.pick.probability)}</span>
+            <progress className={`progress progress-primary ${p.pick.odds ? 'w-10' : 'w-16'}`} value={Math.round(p.pick.probability * 100)} max="100" />
+            <span className="whitespace-nowrap font-mono text-xs" title={sourceTitle(p)}>{formatProb(p.pick.probability)}{p.pick.odds ? <span className="text-base-content/50"> @{p.pick.odds}</span> : null}</span>
             <span className={`badge badge-xs ${CONFIDENCE[p.confidence]}`}>{p.confidence}</span>
           </div>
         </>
@@ -116,6 +138,11 @@ function Record({ record }) {
       <span><span className="font-mono font-semibold text-success">{formatProb(record.hitRate)}</span> of {record.settled} settled tips correct (30 days)</span>
       {record.featuredSettled > 0 && (
         <span><span className="font-mono font-semibold text-primary">{formatProb(record.featuredHitRate)}</span> of {record.featuredSettled} top tips correct</span>
+      )}
+      {record.staked > 0 && (
+        <span title="Profit or loss if you had staked 1 unit on every tip with a price, at the bookmakers' consensus odds">
+          <span className={`font-mono font-semibold ${record.roi >= 0 ? 'text-success' : 'text-error'}`}>{record.roi >= 0 ? '+' : ''}{(record.roi * 100).toFixed(1)}%</span> return at bookmaker odds ({record.staked} tips)
+        </span>
       )}
     </div>
   );

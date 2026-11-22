@@ -267,10 +267,23 @@ NBA 1.4). Tuning the football decay and shrinkage moved accuracy by under 1 poin
 | SuperLega volleyball | 178 | 75.8% | 82.1% |
 | UFC | 513 | 59.5% | none: MMA showed no edge by confidence, so it's rarely rated above low |
 
+**Bookmaker odds.** Each tip can carry the bookmakers' consensus: the median price across bookmakers
+(API-Sports `/odds`, one request per match, cached 2 hours), turned into chances with the margin removed.
+- *Combined:* published chances = market share × bookmakers + (1 − share) × model (default share 60%, set in
+  Admin → Sports tips).
+- *Bookmakers only:* when the model can't rate a competition (e.g. the free plan doesn't cover this season),
+  the tip uses the consensus alone and is labelled "Bookmakers". This makes the tips page work on the free plan.
+- *Value:* flagged when our model rates an outcome at least 5 points above the bookmakers (prices up to 10.0).
+- *Track record at real prices:* settled tips record profit or loss per 1-unit stake at the consensus price, and the
+  tips page and admin show the return on stake. Admin → Sports tips → "Model vs bookmakers" measures which market
+  share would have scored best on settled tips (trust it after ~300 matches).
+- *Quota:* "Odds requests per sport per day" (default 40) caps calls per run; free plans allow 100 a day per sport.
+  On the free plan, odds came back for football, basketball and American football; none for the volleyball match tested.
+
 **Next gains need more data:** bookmaker odds as a model input (paid API-Sports plans), and the contest's crowd
 picks once a few months have been collected (the admin CSV export has the model pick next to each customer pick).
 
 ## Roadmap
 
 All six planned phases are done, plus daily tips, booking codes and the picks contest. Next: better models
-(bookmaker odds as an input, retraining from settled tips and contest picks).
+(tuning the bookmaker share from settled tips, and the contest's crowd picks once a few months are collected).

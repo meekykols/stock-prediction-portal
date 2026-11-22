@@ -19,6 +19,10 @@ export const tipsConfigRules = [
   body('fullAccessPlans.*').isString().trim().toLowerCase(),
   body('previewCount').optional().isInt({ min: 0, max: 50 }).toInt(),
   body('featuredConfidence').optional().isIn(['high', 'medium']),
+  body('odds.enabled').optional().isBoolean().toBoolean(),
+  body('odds.marketWeight').optional().isFloat({ min: 0, max: 1 }).toFloat(),
+  body('odds.valueEdge').optional().isFloat({ min: 0, max: 0.5 }).toFloat(),
+  body('odds.maxCallsPerRun').optional().isInt({ min: 0, max: 1000 }).toInt(),
 ];
 
 export const leaguesRules = [query('sport').isIn(SPORTS).withMessage('Unknown sport')];

@@ -80,6 +80,7 @@ export const signalsApi = {
 export const tipsApi = {
   list: (params) => unwrap(api.get('/tips', { params: clean(params) })),
   stats: () => unwrap(api.get('/tips/stats')),
+  oddsReport: () => unwrap(api.get('/tips/odds-report')),
   config: () => unwrap(api.get('/tips/config')),
   saveConfig: (body) => api.put('/tips/config', body).then((r) => r.data),
   leagues: (sport) => unwrap(api.get('/tips/leagues', { params: { sport } })),

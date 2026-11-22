@@ -41,3 +41,11 @@ test('postponed events void; live or scheduled events wait', () => {
   assert.equal(evaluateTip(tip({ market: '1x2', outcome: 'home' }), { status: { state: 'live' } }), null);
   assert.equal(evaluateTip(tip({ market: '1x2', outcome: 'home' }), undefined), null);
 });
+
+test('returns at bookmaker odds: pick and value selection', () => {
+  const t = { prediction: { pick: { market: '1x2', outcome: 'home', odds: 2.1 }, value: { outcome: 'away', odds: 4 }, markets: [] } };
+  assert.deepEqual(evaluateTip(t, finished(2, 1, 'home')).returns, { pick: 1.1, value: -1 });
+  assert.deepEqual(evaluateTip(t, finished(0, 1, 'away')).returns, { pick: -1, value: 3 });
+  // model-only tips have no price, so no return is recorded
+  assert.equal(evaluateTip(tip({ market: '1x2', outcome: 'home' }), finished(1, 0, 'home')).returns, undefined);
+});
